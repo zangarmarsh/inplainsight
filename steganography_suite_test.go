@@ -16,8 +16,8 @@ func TestSteganography(t *testing.T) {
 var _ = Describe("Concealing/Revealing", func() {
 	loss := uint8(3)
 	message := "Dammi i bitcoin!!"
-	in := "in/test.png"
-	out := "out/test.png"
+	in := "samples/in/test.png"
+	out := "samples/out/test.png"
 
 	Context("When a valid png image is concealed losing the least three significant bits for each RGB(A) matrix", func( ) {
 		err := steganography.Conceal(in, out, message, loss )
