@@ -62,4 +62,3 @@ var _ = Describe("Concealing/Revealing", func() {
 		})
 	})
 })
-Describe( "When a valid unconcealed png is revealed", Pending, )
