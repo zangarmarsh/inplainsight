@@ -1,4 +1,4 @@
-module webshapes.it/steganography
+module github.com/zangarmarsh/inplainsight
 
 go 1.17
 

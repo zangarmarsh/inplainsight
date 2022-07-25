@@ -1,8 +1,9 @@
-package steganography
+package inplainsight
 
 import (
 	"errors"
 	"fmt"
+	"github.com/zangarmarsh/inplainsight/header"
 	"image"
 	"image/color"
 	_ "image/jpeg"
@@ -11,7 +12,6 @@ import (
 	"log"
 	"math"
 	"os"
-	"webshapes.it/steganography/header"
 )
 
 const version uint8 = '\x01'

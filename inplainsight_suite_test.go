@@ -1,8 +1,8 @@
-package steganography_test
+package inplainsight_test
 
 import (
+	"github.com/zangarmarsh/inplainsight"
 	"testing"
-	"webshapes.it/steganography"
 
 	_ "embed"
 	. "github.com/onsi/ginkgo"
@@ -27,7 +27,7 @@ var _ = Describe("Concealing/Revealing", func() {
 	out := "samples/out/test.png"
 
 	BeforeEach(func() {
-		s := steganography.Steganography{}
+		s := inplainsight.Steganography{}
 		Expect(s).ToNot(BeNil())
 	})
 
@@ -35,14 +35,14 @@ var _ = Describe("Concealing/Revealing", func() {
 		By("losing the least three significant bits for each RGB(A) matrix")
 
 		It("Conceals successfully", func() {
-			s := new(steganography.Steganography)
+			s := new(inplainsight.Steganography)
 
 			err := s.Conceal( in, out, string(normalText), loss )
 			Expect( err ).Should( BeNil() )
 		})
 
 		It("Stops if the required compression is way higher than the indicated one", func() {
-			s := new(steganography.Steganography)
+			s := new(inplainsight.Steganography)
 
 			err := s.Conceal(in, out, string(bigText), 3)
 			Expect( err ).Should( Not( BeNil() ))
@@ -53,7 +53,7 @@ var _ = Describe("Concealing/Revealing", func() {
 		By( "specifying to use the least three significant bits" )
 
 		It("Reveals the message", func() {
-			s := new( steganography.Steganography )
+			s := new( inplainsight.Steganography )
 			err := s.Conceal( in, out, string(normalText), loss )
 
 			revealed, err := s.Reveal( out )
