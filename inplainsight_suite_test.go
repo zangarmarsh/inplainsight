@@ -34,6 +34,13 @@ var _ = Describe("Concealing/Revealing", func() {
 	Context("When a valid png image is concealed", func( ) {
 		By("losing the least three significant bits for each RGB(A) matrix")
 
+		It("Stops if there's no text to conceal", func() {
+			s := new(inplainsight.Steganography)
+
+			err := s.Conceal( in, out, "", loss )
+			Expect( err ).Should( Not(BeNil()) )
+		})
+
 		It("Conceals successfully", func() {
 			s := new(inplainsight.Steganography)
 
