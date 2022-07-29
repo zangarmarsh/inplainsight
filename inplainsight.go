@@ -1,4 +1,4 @@
-<package inplainsight
+package inplainsight
 
 import (
 	"errors"
@@ -113,6 +113,8 @@ func (s *Steganography) Reveal(in string) (string, error) {
 		}
 	}
 
+	//fmt.Println("revealed message", string(secretMessage))
+
 	return string(secretMessage), nil
 }
 
@@ -185,7 +187,7 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 		s.header.EndOfMessageDelimiter,
 	}
 
-	fmt.Println("interweaving header", h)
+	//fmt.Println("interweaving header", h)
 
 	additionBitmask := uint8(math.Pow(float64(2), float64(inweavedHeaderBitsPerChannel)) - 1)
 	shiftableBitmask := additionBitmask << (8 - inweavedHeaderBitsPerChannel)
@@ -196,7 +198,7 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 	for i := 0; i < blocks; i++ {
 		x, y := i%size.Y, i/size.Y
 
-		fmt.Printf("Getting pixel at %d.%d\n", y, x)
+		//fmt.Printf("Getting pixel at %d.%d\n", y, x)
 
 		additions := make([]uint8, 3)
 		pixel := outImage.At(x, y)
@@ -211,12 +213,12 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 				}
 
 				fieldIndex = int(math.Floor(float64(splitting+(i*cap(additions))) / 4))
-				fmt.Printf( "[based on value %08b]\n", h[fieldIndex])
+				//fmt.Printf( "[based on value %08b]\n", h[fieldIndex])
 
 				offset := (splitting + (i * cap(additions))) % 4 * 2
 				shiftedBitmask := shiftableBitmask >> offset
 				additions[splitting] = (shiftedBitmask & h[fieldIndex]) >> (6 - offset)
-				fmt.Printf("addition %08b\n", additions[splitting])
+				//fmt.Printf("addition %08b\n", additions[splitting])
 			}
 		}
 
@@ -227,8 +229,8 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 			A: uint8(255),
 		})
 
-		r, g, b, _ := (*outImage).At(x, y).RGBA()
-		fmt.Printf("(%d.%d) h[%d] pixel post-interweave values: %08b %08b %08b\n should be: %08b\n", y, x, fieldIndex, uint8(r), uint8(g), uint8(b), h[fieldIndex])
+		//r, g, b, _ := (*outImage).At(x, y).RGBA()
+		//fmt.Printf("(%d.%d) h[%d] pixel post-interweave values: %08b %08b %08b\n should be: %08b\n", y, x, fieldIndex, uint8(r), uint8(g), uint8(b), h[fieldIndex])
 	}
 
 }
@@ -292,7 +294,14 @@ func conceal(outImage *image.RGBA, secretMessage string, img *image.Image, loss 
 	for y = 0; y < height; y++ {
 		for x = 0; x < width; x++ {
 			if x+1*y+1 <= skipPixels {
-				outImage.Set(x,y, (*img).At(x,y))
+				bitmask := ^uint8(math.Pow(2, float64(loss)) - 1)
+				r,g,b,a := (*img).At(x,y).RGBA()
+				outImage.Set(x,y, color.RGBA{
+					R: uint8(r) & bitmask,
+					G: uint8(g) & bitmask,
+					B: uint8(b) & bitmask,
+					A: uint8(a),
+				})
 				continue
 			}
 
