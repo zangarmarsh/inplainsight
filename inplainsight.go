@@ -23,7 +23,7 @@ type Steganography struct {
 }
 
 func (s *Steganography) AmountOfSkippablePixels() int {
-	return s.header.Size() / inweavedHeaderBitsPerChannel
+	return int(math.Ceil(float64(s.header.Size()) / float64(inweavedHeaderBitsPerChannel) / float64(3)))
 }
 
 func (s *Steganography) SetHeader(message string, maximumCompression, endOfChar, endOfMessage uint8) error {
@@ -89,7 +89,7 @@ func (s *Steganography) Reveal(in string) (string, error) {
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			// fmt.Println("Revealing pixel", x,y)
-			if y+1*x+1 <= skipPixels {
+			if (y+1)*(x+1) <= skipPixels {
 				continue
 			}
 
@@ -123,7 +123,7 @@ func (s *Steganography) Conceal(in, out, secretMessage string, maximumCompressio
 		return errors.New("The provided message is empty" )
 	}
 
-	fmt.Printf("Input file: %s\nOutput file: %s\nSecret message: %s...\n", in, out, secretMessage[:25])
+	//fmt.Printf("Input file: %s\nOutput file: %s\nSecret message: %s...\n", in, out, secretMessage[:25])
 
 	img, err := getImageContent(in)
 	if err != nil {
@@ -191,7 +191,7 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 
 	additionBitmask := uint8(math.Pow(float64(2), float64(inweavedHeaderBitsPerChannel)) - 1)
 	shiftableBitmask := additionBitmask << (8 - inweavedHeaderBitsPerChannel)
-	// fmt.Printf("shiftableBitmask: %08b\n------------------------------\n", shiftableBitmask)
+	//fmt.Printf("shiftableBitmask: %08b\n------------------------------\n", shiftableBitmask)
 	blocks := int(math.Ceil(float64(s.header.Size()) / float64(inweavedHeaderBitsPerChannel) / 3))
 	var fieldIndex int
 
@@ -244,7 +244,7 @@ func (s *Steganography) extractHeader(img *image.Image) error {
 	bitmask := uint8(math.Pow(2, float64(inweavedHeaderBitsPerChannel)) - 1)
 	pixelsForHeader := int(math.Ceil(float64(headerSize) / float64(inweavedHeaderBitsPerChannel) / float64(cap(colors))))
 
-	var currentPixel int = 0
+	var currentPixel = 0
 
 	for index := 0; index < pixelsForHeader; index++ {
 		// fmt.Printf("\nextracting data from pixel %d.%d\n", index/size.Y, index%size.Y)
@@ -293,8 +293,8 @@ func conceal(outImage *image.RGBA, secretMessage string, img *image.Image, loss 
 
 	for y = 0; y < height; y++ {
 		for x = 0; x < width; x++ {
-			if x+1*y+1 <= skipPixels {
-				bitmask := ^uint8(math.Pow(2, float64(loss)) - 1)
+			if (x+1)*(y+1) <= skipPixels {
+				bitmask := ^uint8(math.Pow(2, float64(inweavedHeaderBitsPerChannel)) - 1)
 				r,g,b,a := (*img).At(x,y).RGBA()
 				outImage.Set(x,y, color.RGBA{
 					R: uint8(r) & bitmask,
