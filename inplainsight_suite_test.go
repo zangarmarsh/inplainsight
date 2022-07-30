@@ -22,7 +22,7 @@ func TestSteganography(t *testing.T) {
 }
 
 var _ = Describe("Concealing/Revealing", func() {
-	loss := uint8(3)
+	maximumCompression := uint8(3)
 	in := "samples/in/test.png"
 	out := "samples/out/test.png"
 
@@ -37,14 +37,14 @@ var _ = Describe("Concealing/Revealing", func() {
 		It("Stops if there's no text to conceal", func() {
 			s := new(inplainsight.Steganography)
 
-			err := s.Conceal( in, out, "", loss )
+			err := s.Conceal( in, out, "", maximumCompression)
 			Expect( err ).Should( Not(BeNil()) )
 		})
 
 		It("Conceals successfully", func() {
 			s := new(inplainsight.Steganography)
 
-			err := s.Conceal( in, out, string(normalText), loss )
+			err := s.Conceal( in, out, string(shortText), maximumCompression)
 			Expect( err ).Should( BeNil() )
 		})
 
@@ -61,10 +61,10 @@ var _ = Describe("Concealing/Revealing", func() {
 
 		It("Reveals the message", func() {
 			s := new( inplainsight.Steganography )
-			err := s.Conceal( in, out, string(normalText), loss )
+			err := s.Conceal( in, out, string(shortText), maximumCompression)
 
 			revealed, err := s.Reveal( out )
-			Expect( revealed ).Should( Equal(string(normalText)) )
+			Expect( revealed ).Should( Equal(string(shortText)) )
 			Expect( err ).Should( BeNil() )
 		})
 	})

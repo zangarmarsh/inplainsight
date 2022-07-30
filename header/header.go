@@ -6,8 +6,8 @@ import (
 )
 
 type Header struct {
-	Version               uint8
 	MagicNumber           uint8
+	Version               uint8
 	Compression           uint8
 	EndOfCharDelimiter    uint8
 	EndOfMessageDelimiter uint8
