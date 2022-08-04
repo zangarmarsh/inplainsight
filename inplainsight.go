@@ -94,7 +94,10 @@ func (s *Steganography) Reveal(in, password string) (string, error) {
 		return "", err
 	}
 
-	_ = s.extractHeader(img)
+	err = s.extractHeader(img)
+	if err != nil {
+		return "", err
+	}
 
 	width, height := (*img).Bounds().Size().X, (*img).Bounds().Size().Y
 	bitMask := ^uint8(0) << s.header.Compression
@@ -104,16 +107,15 @@ func (s *Steganography) Reveal(in, password string) (string, error) {
 
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			// fmt.Println("Revealing pixel", x,y)
 			if (y+1)*(x+1) <= skipPixels {
 				continue
 			}
 
 			r, g, b, _ := (*img).At(x, y).RGBA()
 
-			redOffset := ^bitMask & uint8(r)
+			redOffset   := ^bitMask & uint8(r)
 			greenOffset := ^bitMask & uint8(g)
-			blueOffset := ^bitMask & uint8(b)
+			blueOffset  := ^bitMask & uint8(b)
 
 			bufChar += redOffset + greenOffset + blueOffset
 
@@ -302,7 +304,9 @@ func (s *Steganography) extractHeader(img *image.Image) error {
 		EndOfMessageDelimiter: fields[4],
 	}
 
-	fmt.Println("extracted header", s.header)
+	if s.header.MagicNumber != magicNumber {
+		return errors.New( "the given image either not concealed through steganography or needs a password" )
+	}
 
 	return nil
 }
