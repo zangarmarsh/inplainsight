@@ -8,7 +8,7 @@ import (
 	"io"
 )
 
-func encrypt( plaintext []byte, key []byte ) (string, error) {
+func Encrypt( plaintext []byte, key []byte ) (string, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
@@ -30,7 +30,7 @@ func encrypt( plaintext []byte, key []byte ) (string, error) {
 	return base64.RawStdEncoding.EncodeToString(append(iv, sealed...)), nil
 }
 
-func decrypt( ciphertext string, key []byte ) (string, error) {
+func Decrypt( ciphertext string, key []byte ) (string, error) {
 	bCiphertext, err := base64.RawStdEncoding.DecodeString(ciphertext)
 
 	block, err := aes.NewCipher(key)

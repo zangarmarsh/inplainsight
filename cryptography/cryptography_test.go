@@ -15,8 +15,8 @@ func TestEncryption(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ciph, _ := encrypt([]byte(secret), key)
-	_, err = decrypt(ciph, key)
+	ciph, _ := Encrypt([]byte(secret), key)
+	_, err = Decrypt(ciph, key)
 
 	if err != nil {
 		t.Fatal(err)
@@ -32,8 +32,8 @@ func TestDecryption(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ciph, _ := encrypt([]byte(secret), key)
-	decr, err := decrypt(ciph, key)
+	ciph, _ := Encrypt([]byte(secret), key)
+	decr, err := Decrypt(ciph, key)
 	if err != nil {
 		t.Fatal(err)
 	}
