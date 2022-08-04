@@ -1,8 +1,10 @@
 package inplainsight
 
 import (
+	"crypto"
 	"errors"
 	"fmt"
+	"github.com/zangarmarsh/inplainsight/cryptography"
 	"github.com/zangarmarsh/inplainsight/header"
 	"image"
 	"image/color"
@@ -83,7 +85,7 @@ func estimateCompressionLevel(amountOfPixels uint64, message []byte) (uint8, err
 	nil
 }
 
-func (s *Steganography) Reveal(in string) (string, error) {
+func (s *Steganography) Reveal(in, password string) (string, error) {
 	var secretMessage []byte
 	skipPixels := s.AmountOfSkippablePixels()
 
@@ -126,13 +128,22 @@ func (s *Steganography) Reveal(in string) (string, error) {
 			}
 		}
 	}
+	if len(password) != 0 {
+		contentEncriptionKey, headerEncriptionKey := s.deriveEncryptionKeysFromPassword(password)
+		_ = headerEncriptionKey // ToDo: remove it when the header will be encrypted
 
-	//fmt.Println("revealed message", string(secretMessage))
+		decryptedMessage, err := cryptography.Decrypt(string(secretMessage), contentEncriptionKey)
+		if err != nil {
+			return "", err
+		}
+
+		secretMessage = []byte(decryptedMessage)
+	}
 
 	return string(secretMessage), nil
 }
 
-func (s *Steganography) Conceal(in, out, secretMessage string, maximumCompression uint8) error {
+func (s *Steganography) Conceal(in, out, secretMessage, password string, maximumCompression uint8) error {
 	if len(secretMessage) == 0 {
 		return errors.New("The provided message is empty" )
 	}
@@ -150,16 +161,26 @@ func (s *Steganography) Conceal(in, out, secretMessage string, maximumCompressio
 	outImage := image.NewRGBA(imgSize)
 	delimiter := uint8(0)
 
-	if err = s.SetHeader( secretMessage, maximumCompression, delimiter, delimiter ); err != nil {
+	if len(password) != 0 {
+		contentEncriptionKey, headerEncriptionKey := s.deriveEncryptionKeysFromPassword(password)
+		_ = headerEncriptionKey // ToDo: remove it when the header will be encrypted
+
+		secretMessage, err = cryptography.Encrypt([]byte(secretMessage), contentEncriptionKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err = s.SetHeader(secretMessage, maximumCompression, delimiter, delimiter); err != nil {
 		return err
 	}
 
-	x, y, err := conceal( outImage, secretMessage, img, s.header.Compression, s.AmountOfSkippablePixels() )
+	x, y, err := conceal(outImage, secretMessage, img, s.header.Compression, s.AmountOfSkippablePixels())
 	if err != nil {
 		return err
 	}
 
-	s.interweaveHeader( outImage )
+	s.interweaveHeader(outImage)
 
 	// @ToDo Make it stronger
 	for i := 1; i <= 2; i++ {
@@ -189,6 +210,15 @@ func (s *Steganography) Conceal(in, out, secretMessage string, maximumCompressio
 	return nil
 }
 
+func (s *Steganography) deriveEncryptionKeysFromPassword(password string) (contentEncryptionKey []byte, headerEncryptionKey []byte) {
+	sha512 := crypto.SHA512.New()
+	hashedPassword := sha512.Sum([]byte(password))
+	headerEncryptionKey = hashedPassword[32:]
+	contentEncryptionKey = hashedPassword[:32]
+
+	return
+}
+
 func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 	size := (*outImage).Bounds().Size()
 	h := []uint8{
@@ -199,18 +229,13 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 		s.header.EndOfMessageDelimiter,
 	}
 
-	//fmt.Println("interweaving header", h)
-
 	additionBitmask := uint8(math.Pow(float64(2), float64(inweavedHeaderBitsPerChannel)) - 1)
 	shiftableBitmask := additionBitmask << (8 - inweavedHeaderBitsPerChannel)
-	//fmt.Printf("shiftableBitmask: %08b\n------------------------------\n", shiftableBitmask)
 	blocks := int(math.Ceil(float64(s.header.Size()) / float64(inweavedHeaderBitsPerChannel) / float64(inweaveableChannelsPerPixel)))
 	var fieldIndex int
 
 	for i := 0; i < blocks; i++ {
 		x, y := i%size.Y, i/size.Y
-
-		//fmt.Printf("Getting pixel at %d.%d\n", y, x)
 
 		additions := make([]uint8, inweaveableChannelsPerPixel)
 		pixel := outImage.At(x, y)
@@ -240,9 +265,6 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 			B: (uint8(colors[2]) & additionBitmask) | additions[2],
 			A: uint8(255),
 		})
-
-		//r, g, b, _ := (*outImage).At(x, y).RGBA()
-		//fmt.Printf("(%d.%d) h[%d] pixel post-interweave values: %08b %08b %08b\n should be: %08b\n", y, x, fieldIndex, uint8(r), uint8(g), uint8(b), h[fieldIndex])
 	}
 
 }
@@ -259,9 +281,7 @@ func (s *Steganography) extractHeader(img *image.Image) error {
 	var currentPixel = 0
 
 	for index := 0; index < pixelsForHeader; index++ {
-		// fmt.Printf("\nextracting data from pixel %d.%d\n", index/size.Y, index%size.Y)
 		colors[0], colors[1], colors[2], _ = (*img).At(index%size.Y, index/size.Y).RGBA()
-		// fmt.Println("colors", colors)
 
 		for channelIndex := 0; channelIndex < cap(colors) && (currentPixel*inweavedHeaderBitsPerChannel) < headerSize; channelIndex++ {
 			fieldIndex := int(math.Floor(float64(currentPixel * inweavedHeaderBitsPerChannel) / 8))
@@ -269,14 +289,6 @@ func (s *Steganography) extractHeader(img *image.Image) error {
 
 			info := bitmask & uint8(colors[channelIndex])
 			amountToShift := 6 - ((channelIndex + (cap(colors) * index)) % 4 * inweavedHeaderBitsPerChannel)
-			// fmt.Printf("field #%d] extracted %08b from pixel color %08b\n", fieldIndex, info, colors[channelIndex])
-			// fmt.Printf(
-			// 	"\n%30s\n%30s\n%30s\n%30s\n",
-			// 	fmt.Sprintf("color: %08b", colors[channelIndex]),
-			// 	fmt.Sprintf("starting value: %08b", fields[fieldIndex]),
-			// 	fmt.Sprintf("adding: %08b", info<<amountToShift),
-			// 	fmt.Sprintf("result: %08b", fields[fieldIndex]+(info<<amountToShift)),
-			// )
 
 			fields[fieldIndex] += info << amountToShift
 		}

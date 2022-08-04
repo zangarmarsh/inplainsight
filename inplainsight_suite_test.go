@@ -23,8 +23,9 @@ func TestSteganography(t *testing.T) {
 
 var _ = Describe("Concealing/Revealing", func() {
 	maximumCompression := uint8(3)
-	in := "samples/in/test.png"
-	out := "samples/out/test.png"
+	in       := "samples/in/test.png"
+	out      := "samples/out/test.png"
+	password := "password"
 
 	BeforeEach(func() {
 		s := inplainsight.Steganography{}
@@ -37,21 +38,21 @@ var _ = Describe("Concealing/Revealing", func() {
 		It("Stops if there's no text to conceal", func() {
 			s := new(inplainsight.Steganography)
 
-			err := s.Conceal( in, out, "", maximumCompression)
+			err := s.Conceal( in, out, "", password, maximumCompression)
 			Expect( err ).Should( Not(BeNil()) )
 		})
 
 		It("Conceals successfully", func() {
 			s := new(inplainsight.Steganography)
 
-			err := s.Conceal( in, out, string(shortText), maximumCompression)
+			err := s.Conceal( in, out, string(shortText), password, maximumCompression)
 			Expect( err ).Should( BeNil() )
 		})
 
 		It("Stops if the required compression is way higher than the indicated one", func() {
 			s := new(inplainsight.Steganography)
 
-			err := s.Conceal(in, out, string(bigText), 3)
+			err := s.Conceal(in, out, string(bigText), password, 3)
 			Expect( err ).Should( Not( BeNil() ))
 		})
 	})
@@ -61,9 +62,9 @@ var _ = Describe("Concealing/Revealing", func() {
 
 		It("Reveals the message", func() {
 			s := new( inplainsight.Steganography )
-			err := s.Conceal( in, out, string(shortText), maximumCompression)
+			err := s.Conceal( in, out, string(shortText), password, maximumCompression)
 
-			revealed, err := s.Reveal( out )
+			revealed, err := s.Reveal( out, password )
 			Expect( revealed ).Should( Equal(string(shortText)) )
 			Expect( err ).Should( BeNil() )
 		})
