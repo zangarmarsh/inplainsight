@@ -12,10 +12,14 @@ import (
 	"log"
 	"math"
 	"os"
+	"reflect"
 )
 
-const version uint8 = '\x01'
-const magicNumber uint8 = '\x78'
+const version uint8 									 = '\x01'
+const magicNumber uint8 							 = '\x78'
+const inweavedHeaderBitsPerChannel int = 2
+const inweaveableChannelsPerPixel int  = 3
+
 
 type Steganography struct {
 	header header.Header
@@ -38,7 +42,10 @@ func (s *Steganography) SetHeader(message string, maximumCompression, endOfChar,
 	imageSize := (*s.image).Bounds().Size()
 
 	compression, err := estimateCompressionLevel(
-		uint64(imageSize.X * imageSize.Y) - uint64(math.Ceil(float64(s.header.Size()) / 3 / float64(inweavedHeaderBitsPerChannel))),
+		uint64(imageSize.X * imageSize.Y) -
+		uint64(math.Ceil(float64(s.header.Size()) / float64(inweaveableChannelsPerPixel) /
+		float64(inweavedHeaderBitsPerChannel))),
+
 		[]byte(message),
 	)
 	if err != nil {
@@ -57,7 +64,6 @@ func (s *Steganography) SetHeader(message string, maximumCompression, endOfChar,
 }
 
 func estimateCompressionLevel(amountOfPixels uint64, message []byte) (uint8, error) {
-	var involvedChannels uint64 = 3
 	var messageValue uint64 = 0
 
 	for _, v := range message {
@@ -66,7 +72,15 @@ func estimateCompressionLevel(amountOfPixels uint64, message []byte) (uint8, err
 
 	messageValue += uint64(len(message)) + 2
 
-	return uint8(math.Max(1, math.Ceil(1/(float64(amountOfPixels*involvedChannels)/float64(messageValue))))), nil
+	return uint8(
+		math.Max(
+			1,
+			math.Ceil(
+				1 / ( float64( amountOfPixels * uint64(inweaveableChannelsPerPixel) ) / float64(messageValue) ),
+			),
+		),
+	),
+	nil
 }
 
 func (s *Steganography) Reveal(in string) (string, error) {
@@ -175,8 +189,6 @@ func (s *Steganography) Conceal(in, out, secretMessage string, maximumCompressio
 	return nil
 }
 
-const inweavedHeaderBitsPerChannel int = 2
-
 func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 	size := (*outImage).Bounds().Size()
 	h := []uint8{
@@ -192,7 +204,7 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 	additionBitmask := uint8(math.Pow(float64(2), float64(inweavedHeaderBitsPerChannel)) - 1)
 	shiftableBitmask := additionBitmask << (8 - inweavedHeaderBitsPerChannel)
 	//fmt.Printf("shiftableBitmask: %08b\n------------------------------\n", shiftableBitmask)
-	blocks := int(math.Ceil(float64(s.header.Size()) / float64(inweavedHeaderBitsPerChannel) / 3))
+	blocks := int(math.Ceil(float64(s.header.Size()) / float64(inweavedHeaderBitsPerChannel) / float64(inweaveableChannelsPerPixel)))
 	var fieldIndex int
 
 	for i := 0; i < blocks; i++ {
@@ -200,10 +212,10 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 
 		//fmt.Printf("Getting pixel at %d.%d\n", y, x)
 
-		additions := make([]uint8, 3)
+		additions := make([]uint8, inweaveableChannelsPerPixel)
 		pixel := outImage.At(x, y)
 
-		colors := make([]uint32, 3)
+		colors := make([]uint32, inweaveableChannelsPerPixel)
 		colors[0], colors[1], colors[2], _ = pixel.RGBA()
 
 		{
@@ -238,9 +250,9 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
 func (s *Steganography) extractHeader(img *image.Image) error {
 	size := (*img).Bounds().Size()
 	headerSize := s.header.Size()
-	colors := make([]uint32, 3)
+	colors := make([]uint32, inweaveableChannelsPerPixel)
 
-	fields := make([]byte, 5)
+	fields := make([]byte, reflect.TypeOf(s.header).NumField())
 	bitmask := uint8(math.Pow(2, float64(inweavedHeaderBitsPerChannel)) - 1)
 	pixelsForHeader := int(math.Ceil(float64(headerSize) / float64(inweavedHeaderBitsPerChannel) / float64(cap(colors))))
 
@@ -305,11 +317,11 @@ func conceal(outImage *image.RGBA, secretMessage string, img *image.Image, loss 
 				continue
 			}
 
-			compensations := make([]uint8, 3)
+			compensations := make([]uint8, inweaveableChannelsPerPixel)
 			r, g, b, a := (*img).At(x, y).RGBA()
 
 			if secretChar != 0 {
-				for compensation := uint8(0); compensation < 3; compensation++ {
+				for compensation := 0; compensation < inweaveableChannelsPerPixel; compensation++ {
 					var value uint8
 
 					if secretChar < maxValue {
