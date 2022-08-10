@@ -22,14 +22,15 @@ const inweaveableChannelsPerPixel int  = 3
 
 
 type Steganography struct {
-	header header.Header
-	image  *image.Image
+	header   header.Header
+	image    *image.Image
+	encrypted bool
 }
 
-func (s *Steganography) AmountOfSkippablePixels(password string) int {
+func (s *Steganography) HeaderReservedPixels() int {
 	bits := s.header.Bits()
 
-	if len(password) != 0 {
+	if s.encrypted {
 		bits = cryptography.Bits(bits)
 	}
 	return int(math.Ceil(float64(bits) / float64(inweavedHeaderBitsPerChannel) / float64(inweaveableChannelsPerPixel)))
@@ -88,9 +89,14 @@ func estimateCompressionLevel(amountOfPixels uint64, message []byte) (uint8, err
 	nil
 }
 
-func (s *Steganography) Reveal(in, password string) (string, error) {
+func (s *Steganography) Reveal(in string, password []byte) (string, error) {
 	var secretMessage []byte
-	skipPixels := s.AmountOfSkippablePixels(password)
+
+	if len(password) != 0 {
+		s.encrypted = true
+	}
+
+	skipPixels := s.HeaderReservedPixels( )
 
 	img, err := getImageContent(in)
 	if err != nil {
@@ -99,7 +105,11 @@ func (s *Steganography) Reveal(in, password string) (string, error) {
 
 	var contentEncryptionKey, headerEncryptionKey []byte
 	if len(password) != 0 {
-		contentEncryptionKey, headerEncryptionKey = cryptography.DeriveEncryptionKeysFromPassword(password)
+		contentEncryptionKey, headerEncryptionKey, err = cryptography.DeriveEncryptionKeysFromPassword(password)
+
+		if err != nil {
+			return "", err
+		}
 	}
 
 	err = s.extractHeader(img, headerEncryptionKey)
@@ -151,12 +161,14 @@ func (s *Steganography) Reveal(in, password string) (string, error) {
 	return string(secretMessage), nil
 }
 
-func (s *Steganography) Conceal(in, out string, secretMessage []byte, password string, maximumCompression uint8) error {
+func (s *Steganography) Conceal(in, out string, secretMessage, password []byte, maximumCompression uint8) error {
 	if len(secretMessage) == 0 {
 		return errors.New("The provided message is empty" )
 	}
 
-	//fmt.Printf("Input file: %s\nOutput file: %s\nSecret message: %s...\n", in, out, secretMessage[:25])
+	if len(password) != 0 {
+		s.encrypted = true
+	}
 
 	img, err := getImageContent(in)
 	if err != nil {
@@ -171,7 +183,10 @@ func (s *Steganography) Conceal(in, out string, secretMessage []byte, password s
 
 	var contentEncryptionKey, headerEncryptionKey []byte
 	if len(password) != 0 {
-		contentEncryptionKey, headerEncryptionKey = cryptography.DeriveEncryptionKeysFromPassword(password)
+		contentEncryptionKey, headerEncryptionKey, err = cryptography.DeriveEncryptionKeysFromPassword(password)
+		if err != nil {
+			return err
+		}
 
 		secretMessage, err = cryptography.Encrypt(secretMessage, contentEncryptionKey)
 		if err != nil {
@@ -183,7 +198,7 @@ func (s *Steganography) Conceal(in, out string, secretMessage []byte, password s
 		return err
 	}
 
-	x, y, err := conceal(outImage, secretMessage, img, s.header.Compression, s.AmountOfSkippablePixels(password))
+	x, y, err := conceal(outImage, secretMessage, img, s.header.Compression, s.HeaderReservedPixels())
 	if err != nil {
 		return err
 	}
@@ -295,7 +310,7 @@ func (s *Steganography) extractHeader(img *image.Image, decryptionKey []byte) er
 
 	fields := make([]byte, headerSize / 8)
 	bitmask := uint8(math.Pow(2, float64(inweavedHeaderBitsPerChannel)) - 1)
-	pixelsForHeader := s.AmountOfSkippablePixels(string(decryptionKey))
+	pixelsForHeader := s.HeaderReservedPixels( )
 
 	var currentPixel = 0
 
