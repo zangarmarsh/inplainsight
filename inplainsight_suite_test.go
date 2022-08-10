@@ -62,6 +62,19 @@ var _ = Describe("Concealing/Revealing", func() {
 
 		It("Reveals the message", func() {
 			s := new( inplainsight.Steganography )
+			err := s.Conceal( in, out, string(shortText), "", maximumCompression)
+
+			revealed, err := s.Reveal( out, "" )
+			Expect( revealed ).Should( Equal(string(shortText)) )
+			Expect( err ).Should( BeNil() )
+		})
+	})
+
+	Context("When a png image is revealed using a password", func() {
+		By( "specifying to use the least three significant bits" )
+
+		It("Reveals the message", func() {
+			s := new( inplainsight.Steganography )
 			err := s.Conceal( in, out, string(shortText), password, maximumCompression)
 
 			revealed, err := s.Reveal( out, password )

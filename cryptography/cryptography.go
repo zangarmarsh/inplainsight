@@ -1,6 +1,7 @@
 package cryptography
 
 import (
+	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -49,4 +50,13 @@ func Decrypt( ciphertext string, key []byte ) (string, error) {
 	}
 
 	return string(bPlainText), nil
+}
+
+func DeriveEncryptionKeysFromPassword(password string) (contentEncryptionKey []byte, headerEncryptionKey []byte) {
+	sha512 := crypto.SHA512.New()
+	hashedPassword := sha512.Sum([]byte(password))
+	headerEncryptionKey = hashedPassword[32:]
+	contentEncryptionKey = hashedPassword[:32]
+
+	return
 }

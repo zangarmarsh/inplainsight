@@ -1,7 +1,6 @@
 package inplainsight
 
 import (
-	"crypto"
 	"errors"
 	"fmt"
 	"github.com/zangarmarsh/inplainsight/cryptography"
@@ -131,7 +130,7 @@ func (s *Steganography) Reveal(in, password string) (string, error) {
 		}
 	}
 	if len(password) != 0 {
-		contentEncriptionKey, headerEncriptionKey := s.deriveEncryptionKeysFromPassword(password)
+		contentEncriptionKey, headerEncriptionKey := cryptography.DeriveEncryptionKeysFromPassword(password)
 		_ = headerEncriptionKey // ToDo: remove it when the header will be encrypted
 
 		decryptedMessage, err := cryptography.Decrypt(string(secretMessage), contentEncriptionKey)
@@ -164,7 +163,7 @@ func (s *Steganography) Conceal(in, out, secretMessage, password string, maximum
 	delimiter := uint8(0)
 
 	if len(password) != 0 {
-		contentEncriptionKey, headerEncriptionKey := s.deriveEncryptionKeysFromPassword(password)
+		contentEncriptionKey, headerEncriptionKey := cryptography.DeriveEncryptionKeysFromPassword(password)
 		_ = headerEncriptionKey // ToDo: remove it when the header will be encrypted
 
 		secretMessage, err = cryptography.Encrypt([]byte(secretMessage), contentEncriptionKey)
@@ -210,15 +209,6 @@ func (s *Steganography) Conceal(in, out, secretMessage, password string, maximum
 	}
 
 	return nil
-}
-
-func (s *Steganography) deriveEncryptionKeysFromPassword(password string) (contentEncryptionKey []byte, headerEncryptionKey []byte) {
-	sha512 := crypto.SHA512.New()
-	hashedPassword := sha512.Sum([]byte(password))
-	headerEncryptionKey = hashedPassword[32:]
-	contentEncryptionKey = hashedPassword[:32]
-
-	return
 }
 
 func (s *Steganography) interweaveHeader(outImage *image.RGBA) {
