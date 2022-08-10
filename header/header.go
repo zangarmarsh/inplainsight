@@ -13,7 +13,7 @@ type Header struct {
 	EndOfMessageDelimiter uint8
 }
 
-func (h *Header) Size() int {
+func (h *Header) Bits() int {
 	v := reflect.ValueOf( *h )
 	return v.NumField() * int(unsafe.Sizeof( uint8(0) )) * 8
 }

@@ -19,7 +19,7 @@ import (
 // | PlainText | EncryptedContent |
 // Where PlainText is a string(16) of plaintext containing the IV and
 // EncryptedContent has a ratio of 1:1 with the relative decryption and is composed by
-// | string(32) the HMAC | string[N = EncryptedContnent - string(32)(HMAC Size) ] the secret
+// | string(32) the HMAC | string[N = EncryptedContnent - string(32)(HMAC Bits) ] the secret
 func Encrypt( plaintext []byte, key []byte ) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -76,7 +76,8 @@ func Decrypt( ciphertext []byte, key []byte ) ([]byte, error) {
 
 func DeriveEncryptionKeysFromPassword(password string) (contentEncryptionKey []byte, headerEncryptionKey []byte) {
 	sha512 := crypto.SHA512.New()
-	hashedPassword := sha512.Sum([]byte(password))
+	sha512.Write([]byte(password))
+	hashedPassword := sha512.Sum(nil)
 	headerEncryptionKey = hashedPassword[32:]
 	contentEncryptionKey = hashedPassword[:32]
 
@@ -87,4 +88,9 @@ func HMAC(content []byte, key []byte) []byte {
 	hashFunc := hmac.New(sha256.New, key)
 	hashFunc.Write(content)
 	return hashFunc.Sum(nil)
+}
+
+func Bits(inputBits int) int {
+
+	return base64.RawStdEncoding.EncodedLen( inputBits / 8 + aes.BlockSize + sha256.Size ) * 8
 }
