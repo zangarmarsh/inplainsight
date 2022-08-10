@@ -133,18 +133,18 @@ func (s *Steganography) Reveal(in, password string) (string, error) {
 		contentEncriptionKey, headerEncriptionKey := cryptography.DeriveEncryptionKeysFromPassword(password)
 		_ = headerEncriptionKey // ToDo: remove it when the header will be encrypted
 
-		decryptedMessage, err := cryptography.Decrypt(string(secretMessage), contentEncriptionKey)
+		decryptedMessage, err := cryptography.Decrypt(secretMessage, contentEncriptionKey)
 		if err != nil {
 			return "", err
 		}
 
-		secretMessage = []byte(decryptedMessage)
+		secretMessage = decryptedMessage
 	}
 
 	return string(secretMessage), nil
 }
 
-func (s *Steganography) Conceal(in, out, secretMessage, password string, maximumCompression uint8) error {
+func (s *Steganography) Conceal(in, out string, secretMessage []byte, password string, maximumCompression uint8) error {
 	if len(secretMessage) == 0 {
 		return errors.New("The provided message is empty" )
 	}
@@ -166,13 +166,13 @@ func (s *Steganography) Conceal(in, out, secretMessage, password string, maximum
 		contentEncriptionKey, headerEncriptionKey := cryptography.DeriveEncryptionKeysFromPassword(password)
 		_ = headerEncriptionKey // ToDo: remove it when the header will be encrypted
 
-		secretMessage, err = cryptography.Encrypt([]byte(secretMessage), contentEncriptionKey)
+		secretMessage, err = cryptography.Encrypt(secretMessage, contentEncriptionKey)
 		if err != nil {
 			return err
 		}
 	}
 
-	if err = s.SetHeader(secretMessage, maximumCompression, delimiter, delimiter); err != nil {
+	if err = s.SetHeader(string(secretMessage), maximumCompression, delimiter, delimiter); err != nil {
 		return err
 	}
 
@@ -301,7 +301,7 @@ func (s *Steganography) extractHeader(img *image.Image) error {
 	return nil
 }
 
-func conceal(outImage *image.RGBA, secretMessage string, img *image.Image, loss uint8, skipPixels int) (x, y int, err error) {
+func conceal(outImage *image.RGBA, secretMessage []byte, img *image.Image, loss uint8, skipPixels int) (x, y int, err error) {
 	err = nil
 	width, height := outImage.Bounds().Size().X, outImage.Bounds().Size().Y
 
