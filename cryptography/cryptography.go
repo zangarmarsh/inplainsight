@@ -2,15 +2,16 @@ package cryptography
 
 import (
 	"bytes"
-	"crypto"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"golang.org/x/crypto/argon2"
 	"io"
 )
 
@@ -74,10 +75,13 @@ func Decrypt( ciphertext []byte, key []byte ) ([]byte, error) {
 	return content, nil
 }
 
-func DeriveEncryptionKeysFromPassword(password string) (contentEncryptionKey []byte, headerEncryptionKey []byte) {
-	sha512 := crypto.SHA512.New()
-	sha512.Write([]byte(password))
-	hashedPassword := sha512.Sum(nil)
+func DeriveEncryptionKeysFromPassword(password []byte) (contentEncryptionKey []byte, headerEncryptionKey []byte, err error) {
+	saltHasher := md5.New()
+	saltHasher.Write(password)
+
+	salt := saltHasher.Sum(nil)
+
+	hashedPassword := argon2.IDKey(password, salt,10,1024*64,2,64)
 	headerEncryptionKey = hashedPassword[32:]
 	contentEncryptionKey = hashedPassword[:32]
 
@@ -91,6 +95,5 @@ func HMAC(content []byte, key []byte) []byte {
 }
 
 func Bits(inputBits int) int {
-
 	return base64.RawStdEncoding.EncodedLen( inputBits / 8 + aes.BlockSize + sha256.Size ) * 8
 }

@@ -40,3 +40,20 @@ func TestHMAC(t *testing.T) {
 		t.Fatal("generated hmacs are not equals")
 	}
 }
+
+func TestDeriveEncryptionKeysFromPassword(t *testing.T) {
+	firstKey, secondKey, err := DeriveEncryptionKeysFromPassword( []byte("password") )
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(firstKey) != 32 || len(secondKey) != 32 {
+		t.Fatal("derived keys length must be 32 bytes")
+	}
+
+	thirdKey, fourthKey, err := DeriveEncryptionKeysFromPassword( []byte("password") )
+
+	if bytes.Compare(firstKey, thirdKey) != 0 || bytes.Compare(secondKey, fourthKey) != 0 {
+		t.Fatal("derived keys must be equals in different iterations")
+	}
+}
