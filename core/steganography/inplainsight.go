@@ -1,10 +1,10 @@
-package inplainsight
+package steganography
 
 import (
 	"errors"
 	"fmt"
-	"github.com/zangarmarsh/inplainsight/cryptography"
-	"github.com/zangarmarsh/inplainsight/header"
+	"github.com/zangarmarsh/inplainsight/core/cryptography"
+	"github.com/zangarmarsh/inplainsight/core/steganography/header"
 	"image"
 	"image/color"
 	_ "image/jpeg"
@@ -22,8 +22,8 @@ const inweaveableChannelsPerPixel int  = 3
 
 
 type Steganography struct {
-	header   header.Header
-	image    *image.Image
+	header header.Header
+	image  *image.Image
 	encrypted bool
 }
 
@@ -318,7 +318,7 @@ func (s *Steganography) extractHeader(img *image.Image, decryptionKey []byte) er
 		colors[0], colors[1], colors[2], _ = (*img).At(index%size.Y, index/size.Y).RGBA( )
 
 		for channelIndex := 0; channelIndex < cap(colors) && (currentPixel*inweavedHeaderBitsPerChannel) < headerSize; channelIndex++ {
-			fieldIndex := int(math.Floor(float64(currentPixel * inweavedHeaderBitsPerChannel) / 8))
+			fieldIndex := int(math.Floor(float64(currentPixel *inweavedHeaderBitsPerChannel) / 8))
 			currentPixel++
 
 			info := bitmask & uint8(colors[channelIndex])
