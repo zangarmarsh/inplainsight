@@ -6,6 +6,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/ui"
 	"log"
+	"time"
 )
 
 
@@ -22,7 +23,7 @@ type PageInterface interface {
 }
 
 type GridPage struct {
-	grid *tview.Grid
+	grid tview.Primitive
 	name string
 }
 
@@ -30,7 +31,7 @@ func (r *GridPage) GetPrimitive() tview.Primitive {
 	return r.grid
 }
 
-func (r *GridPage) SetPrimitive(grid *tview.Grid) {
+func (r *GridPage) SetPrimitive(grid tview.Primitive) {
 	r.grid = grid
 }
 
@@ -55,7 +56,7 @@ func Init() {
 		)
 	}
 
-	err := Navigate("login")
+	err := Navigate("register")
 	if err != nil {
 		log.Println(err)
 	}
@@ -64,6 +65,8 @@ func Init() {
 func Navigate(path string) error {
 	if PageFactories[path] != nil {
 		ui.InPlainSight.Pages.SwitchToPage(path)
+		time.Sleep(1)
+		ui.InPlainSight.App.ForceDraw()
 		return nil
 	}
 
