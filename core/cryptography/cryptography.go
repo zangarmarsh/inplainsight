@@ -10,7 +10,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
-	"fmt"
 	"golang.org/x/crypto/argon2"
 	"io"
 )
@@ -49,8 +48,11 @@ func Encrypt( plaintext []byte, key []byte ) ([]byte, error) {
 // Decrypt - See Encrypt for the ciphertext structure
 func Decrypt( ciphertext []byte, key []byte ) ([]byte, error) {
 	// Add a minimum length check
-	decoded, err := base64.RawStdEncoding.DecodeString(string(ciphertext))
-	ciphertext = decoded
+	ciphertext, err := base64.RawStdEncoding.DecodeString(string(ciphertext))
+
+	if len(ciphertext) <= sha256.Size + aes.BlockSize {
+		return nil, errors.New("theres no enough content to decrypt")
+	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -68,7 +70,6 @@ func Decrypt( ciphertext []byte, key []byte ) ([]byte, error) {
 	content := decrypted[sha256.Size:]
 
 	if bytes.Compare(keyedHash, HMAC(content, key)) != 0 {
-		fmt.Printf("%20s: %+v\n%20s: %+v\n\n", "hmac", keyedHash, "extracted", HMAC(content, key))
 		return nil, errors.New("decryption failed because of content integrity check: hmac are not equals")
 	}
 
