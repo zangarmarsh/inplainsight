@@ -3,9 +3,15 @@ package register
 import (
 	"fmt"
 	"github.com/rivo/tview"
+	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"github.com/zangarmarsh/inplainsight/ui"
+	"github.com/zangarmarsh/inplainsight/ui/events"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
+	"github.com/zangarmarsh/inplainsight/ui/widgets"
 	"log"
+	"os"
+	"strings"
+	"time"
 )
 
 type Page struct {
@@ -29,11 +35,74 @@ func (r pageFactory) Create() pages.PageInterface {
 
 	form.
 		AddPasswordField("Master Password", "", 0, '*', nil).
+		AddInputField("Pool path", "~/Pictures/passwords/", 0, nil, nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Register", func() {
-			text := form.GetFormItemByLabel("Master Password").(*tview.InputField).GetText()
-			log.Print(text)
+			password := form.GetFormItemByLabel("Master Password").(*tview.InputField).GetText()
+			path     := form.GetFormItemByLabel("Pool path").(*tview.InputField).GetText()
 
+			if path[0] == '~' {
+				homeDir, err := os.UserHomeDir()
+				if err == nil {
+					path = fmt.Sprintf("%s/%s", homeDir, strings.TrimLeft(path[1:], "/\\"))
+				}
+			}
+
+			files, err := os.ReadDir(path)
+			if err != nil {
+				log.Println(err)
+				widgets.ModalError( err.Error() )
+				ui.InPlainSight.App.ForceDraw()
+				return
+			}
+
+			if len(files) == 0 {
+				log.Println("empty directory")
+			}
+
+			ui.InPlainSight.Path = path
+			ui.InPlainSight.MasterPassword = password
+
+			err = pages.Navigate("list")
+
+		  s := steganography.Steganography{}
+			var eligibleFiles []os.DirEntry
+			for _, file := range files {
+				if !file.IsDir() && strings.Contains(file.Name(), ".png") {
+					eligibleFiles = append(eligibleFiles, file)
+					log.Println("found eligibile file " + file.Name())
+
+					filePath := fmt.Sprintf("%s/%s", strings.TrimRight(path, "/\\"), file.Name())
+					var revealed string
+					revealed, err = s.Reveal(filePath, []byte(password))
+					log.Println(fmt.Sprintf("master password used to reveal %#v", password))
+
+					if err == nil {
+						log.Println(fmt.Sprintf("found secret %#v", revealed) )
+
+						secret := &ui.Secret{}
+						secret.Unserialize(revealed)
+						secret.FilePath = filePath
+
+						ui.InPlainSight.InvolvedFiles = append(ui.InPlainSight.InvolvedFiles, file.Name())
+						ui.InPlainSight.Secrets       = append(ui.InPlainSight.Secrets, secret)
+
+						ui.InPlainSight.Trigger(events.Event{
+							CreatedAt: time.Now(),
+							EventType: events.DiscoveredNewSecret,
+							Data: map[string]interface{}{
+								"secret": *secret,
+							},
+						})
+					} else {
+						log.Println("theres no secret in here")
+					}
+				}
+			}
+
+			// if err != nil {
+			// 	widgets.ModalError("Generic error")
+			// }
 		}).
 		AddButton("Quit (CTRL + C)", func() {
 			ui.InPlainSight.App.Stop()
