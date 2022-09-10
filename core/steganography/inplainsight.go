@@ -150,14 +150,15 @@ func (s *Steganography) Reveal(in string, password []byte) (string, error) {
 	}
 
 	if len(contentEncryptionKey) != 0 {
-		decryptedMessage, err := cryptography.Decrypt(secretMessage, contentEncryptionKey)
-		if err != nil {
-			return "", err
+		decryptedMessage, decryptionErr := cryptography.Decrypt(secretMessage, contentEncryptionKey)
+		if decryptionErr != nil {
+			return "", decryptionErr
 		}
 
 		secretMessage = decryptedMessage
 	}
 
+	log.Printf("REVEALED SECRET %#v\n", secretMessage)
 	return string(secretMessage), nil
 }
 
@@ -226,8 +227,6 @@ func (s *Steganography) Conceal(in, out string, secretMessage, password []byte, 
 		return err
 	}
 
-	defer outFile.Close()
-
 	err = png.Encode(outFile, outImage)
 	if err != nil {
 		return err
@@ -248,14 +247,14 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA, encryptionKey []b
 
 	if len(encryptionKey) != 0 {
 		var err error
-		//fmt.Println("encrypted should be ", cryptography.Bits(len(h)) / 8)
+		// fmt.Println("encrypted should be ", cryptography.Bits(len(h)) / 8)
 		h, err = cryptography.Encrypt(h, encryptionKey)
-		//fmt.Println("real encrypted", len(h))
+		// fmt.Println("real encrypted", len(h))
 		if err != nil {
 			return err
 		}
 
-		//fmt.Printf("interweaving encrypted header len(%d) %+v\n", len(h), h)
+		// fmt.Printf("interweaving encrypted header len(%d) %+v\n", len(h), h)
 	}
 
 	additionBitmask := uint8(math.Pow(float64(2), float64(inweavedHeaderBitsPerChannel)) - 1)
@@ -269,8 +268,8 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA, encryptionKey []b
 		additions := make([]uint8, inweaveableChannelsPerPixel)
 		pixel := outImage.At(x, y)
 
-		colors := make([]uint32, inweaveableChannelsPerPixel)
-		colors[0], colors[1], colors[2], _ = pixel.RGBA()
+		colors := make([]uint32, inweaveableChannelsPerPixel + 1)
+		colors[0], colors[1], colors[2], colors[3] = pixel.RGBA()
 
 		{
 			for splitting := 0; splitting < cap(additions); splitting++ {
@@ -292,7 +291,7 @@ func (s *Steganography) interweaveHeader(outImage *image.RGBA, encryptionKey []b
 			R: (uint8(colors[0]) & additionBitmask) | additions[0],
 			G: (uint8(colors[1]) & additionBitmask) | additions[1],
 			B: (uint8(colors[2]) & additionBitmask) | additions[2],
-			A: uint8(255),
+			A: uint8(colors[3]),
 		})
 	}
 
@@ -329,7 +328,7 @@ func (s *Steganography) extractHeader(img *image.Image, decryptionKey []byte) er
 	}
 
 	if len(decryptionKey) != 0 {
-		//fmt.Printf( "extracted header length len(%d) %+v\n", len(fields), fields )
+		// fmt.Printf( "extracted header length len(%d) %+v\n", len(fields), fields )
 
 		var err error
 		fields, err = cryptography.Decrypt(fields, decryptionKey)
@@ -339,10 +338,10 @@ func (s *Steganography) extractHeader(img *image.Image, decryptionKey []byte) er
 	}
 
 	s.header = header.Header{
-		MagicNumber: fields[0],
-		Version: fields[1],
-		Compression: fields[2],
-		EndOfCharDelimiter: fields[3],
+		MagicNumber:           fields[0],
+		Version:               fields[1],
+		Compression:           fields[2],
+		EndOfCharDelimiter:    fields[3],
 		EndOfMessageDelimiter: fields[4],
 	}
 
@@ -417,7 +416,6 @@ func getImageContent(in string) (*image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer fileContent.Close()
 
 	_, err = fileContent.Seek(0, 0)
 	if err != nil {
