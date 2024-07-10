@@ -2,6 +2,9 @@ package list
 
 import (
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/steganography"
@@ -12,33 +15,31 @@ import (
 	"github.com/zangarmarsh/inplainsight/ui/services/logging"
 	"github.com/zangarmarsh/inplainsight/ui/widgets"
 	"golang.design/x/clipboard"
-	"log"
-	"strings"
 )
 
 type Page struct {
 	pages.GridPage
 }
 
-type pageFactory struct { }
+type pageFactory struct{}
 
 func (r pageFactory) GetName() string {
 	return "list"
 }
 
-var logBox           *logging.LogsBox
-var filteredSecrets  []*ui.Secret
+var logBox *logging.LogsBox
+var filteredSecrets []*ui.Secret
 var selectedListItem *int
-var searchQuery      string
+var searchQuery string
 
 func (r pageFactory) Create() pages.PageInterface {
 	var filterResults = func(resultList *tview.List, secrets []*ui.Secret) {
 		log.Println("Secrets: ")
 		for _, secret := range secrets {
-			fmt.Printf("%+v\n", secret)
+			log.Printf("%+v\n", secret)
 		}
 
-		lowerCaseSearchQuery := strings.ToLower(strings.TrimLeft( searchQuery, " " ))
+		lowerCaseSearchQuery := strings.ToLower(strings.TrimLeft(searchQuery, " "))
 		resultList.Clear()
 		filteredSecrets = nil
 
@@ -47,10 +48,10 @@ func (r pageFactory) Create() pages.PageInterface {
 		})
 
 		for i, secret := range secrets {
-			pasteIntoClipboard := func( ) {
+			pasteIntoClipboard := func() {
 				log.Println("Copying into clipboard")
 				clipboard.Write(clipboard.FmtText, []byte(filteredSecrets[*selectedListItem].Secret))
-				logBox.AddLine( fmt.Sprintf("Secret '%s' copied into clipboard!", filteredSecrets[*selectedListItem].Secret), logging.Info)
+				logBox.AddLine(fmt.Sprintf("Secret '%s' copied into clipboard!", filteredSecrets[*selectedListItem].Secret), logging.Info)
 				logBox.AddSeparator()
 			}
 
@@ -78,10 +79,10 @@ func (r pageFactory) Create() pages.PageInterface {
 	}
 
 	page := &Page{}
-	page.SetName( r.GetName() )
+	page.SetName(r.GetName())
 
 	container := tview.NewFlex()
-	container.SetBorderPadding(0,0,1,1)
+	container.SetBorderPadding(0, 0, 1, 1)
 	container.SetTitle(fmt.Sprintf(" inplainsight v%s ", ui.Version)).
 		SetBorder(true)
 
@@ -94,7 +95,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			SetTitle("Logs").
 			SetBorder(true)
 		primitive.SetDynamicColors(true)
-		primitive.SetBorderPadding(0,0,2,2)
+		primitive.SetBorderPadding(0, 0, 2, 2)
 		logBox = logging.NewLogsBox(primitive)
 
 		logBox.AddLine("Starting up...", logging.Info)
@@ -111,7 +112,6 @@ func (r pageFactory) Create() pages.PageInterface {
 	resultBox.AddItem(resultList, 0, 1, false)
 	resultBox.SetTitle("Results")
 
-
 	listOfShortcuts := []string{
 		"[orange:italic][ENTER][-] Clipboard",
 		"[orange:italic][^N][-] New",
@@ -126,15 +126,14 @@ func (r pageFactory) Create() pages.PageInterface {
 	shortcuts.SetText(strings.Join(listOfShortcuts, " "))
 	resultBox.AddItem(shortcuts, 1, 0, false)
 
-
 	// Query box
 	queryBox := tview.NewGrid()
-	queryBox.SetSize(1,1,1,1)
+	queryBox.SetSize(1, 1, 1, 1)
 	queryInput := tview.NewInputField().
 		SetPlaceholder("Search for anything")
 	queryInput.SetBorderPadding(0, 0, 1, 1)
-	queryBox.AddItem(queryInput, 1, 1, 1, 1, 0, 0, true )
-	queryBox.SetBorder(true).SetBorderPadding(0,0,0,0)
+	queryBox.AddItem(queryInput, 1, 1, 1, 1, 0, 0, true)
+	queryBox.SetBorder(true).SetBorderPadding(0, 0, 0, 0)
 	queryInput.SetTitle("ciao")
 	queryInput.SetChangedFunc(func(text string) {
 		searchQuery = text
@@ -180,11 +179,11 @@ func (r pageFactory) Create() pages.PageInterface {
 	copyright.SetTextAlign(tview.AlignRight)
 	copyright.SetText("[orange:italic] github.com/zangarmarsh/inplainsight")
 
-	container.AddItem(copyright, 1,1,false)
+	container.AddItem(copyright, 1, 1, false)
 	page.SetPrimitive(container)
 
 	ui.InPlainSight.AddEventsListener(
-		[]events.EventType{ events.DiscoveredNewSecret },
+		[]events.EventType{events.DiscoveredNewSecret},
 		func(event events.Event) {
 			resultList.AddItem(event.Data["secret"].(ui.Secret).Title, event.Data["secret"].(ui.Secret).Description, 0, nil)
 			filterResults(resultList, ui.InPlainSight.Secrets)
@@ -197,38 +196,38 @@ func (r pageFactory) Create() pages.PageInterface {
 
 			logBox.AddLine(fmt.Sprintf("Found secret '%s' in file", logLine), logging.Info)
 			logBox.AddSeparator()
-	})
+		})
 
 	ui.InPlainSight.AddEventsListener(
-		[]events.EventType{ events.UpdatedSecret },
+		[]events.EventType{events.UpdatedSecret},
 		func(event events.Event) {
 			log.Println("event", event)
 
 			filterResults(resultList, ui.InPlainSight.Secrets)
 			ui.InPlainSight.App.ForceDraw()
-			},
-		)
+		},
+	)
 
 	ui.InPlainSight.AddEventsListener(
-		[]events.EventType{ events.AddedNewSecret },
+		[]events.EventType{events.AddedNewSecret},
 		func(event events.Event) {
 			resultList.AddItem(event.Data["secret"].(ui.Secret).Secret, event.Data["secret"].(ui.Secret).Description, 0, nil)
 			filterResults(resultList, ui.InPlainSight.Secrets)
 			logBox.AddLine("Added a new secret", logging.Info)
 			logBox.AddSeparator()
-	})
+		})
 
 	container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
-			case tcell.KeyCtrlN:
-				log.Println("Detected ctrl + n")
-				err := pages.Navigate("new")
+		case tcell.KeyCtrlN:
+			log.Println("Detected ctrl + n")
+			err := pages.Navigate("new")
 
-				if err != nil {
-					widgets.ModalError("Generic error " + err.Error() )
-					ui.InPlainSight.App.ForceDraw()
-					log.Println("generic error" + err.Error())
-				}
+			if err != nil {
+				widgets.ModalError("Generic error " + err.Error())
+				ui.InPlainSight.App.ForceDraw()
+				log.Println("generic error" + err.Error())
+			}
 
 		case tcell.KeyCtrlE:
 			editsecret.Secret = filteredSecrets[*selectedListItem]
@@ -236,12 +235,12 @@ func (r pageFactory) Create() pages.PageInterface {
 			pages.Navigate("edit")
 
 		case tcell.KeyCtrlD:
-			// widgets.ModalError("Are you sure you want to delete this secret?")
+			widgets.ModalError("Are you sure you want to delete this secret?")
 			ui.InPlainSight.App.ForceDraw()
 
-			filteredSecrets[*selectedListItem].Secret      = ""
+			filteredSecrets[*selectedListItem].Secret = ""
 			filteredSecrets[*selectedListItem].Description = ""
-			filteredSecrets[*selectedListItem].Title       = ""
+			filteredSecrets[*selectedListItem].Title = ""
 
 			s := steganography.Steganography{}
 			s.Conceal(
@@ -252,11 +251,11 @@ func (r pageFactory) Create() pages.PageInterface {
 				3,
 			)
 
-			filteredSecrets = append(filteredSecrets[*selectedListItem:], filteredSecrets[:(*selectedListItem + 1)]...)
+			filteredSecrets = append(filteredSecrets[*selectedListItem:], filteredSecrets[:(*selectedListItem+1)]...)
 			filterResults(resultList, ui.InPlainSight.Secrets)
 
-			default:
-				log.Println("Tasto generico")
+		default:
+			log.Println("Tasto generico")
 		}
 
 		return event
@@ -265,10 +264,10 @@ func (r pageFactory) Create() pages.PageInterface {
 	return page
 }
 
-
 func register(records pages.PageFactoryDictionary) pages.PageFactoryInterface {
 	records["list"] = pageFactory{}
 
 	return records["list"]
 }
+
 var _ = register(pages.PageFactories)
