@@ -14,35 +14,27 @@ import (
 	"time"
 )
 
-type Page struct {
-	pages.GridPage
-}
-
-type pageFactory struct{}
-
-func (r pageFactory) GetName() string {
+func GetName() string {
 	return "edit"
 }
 
-var Secret *ui.Secret
-
-func (r pageFactory) Create() pages.PageInterface {
-	page := Page{}
-	page.SetName(r.GetName())
+func Create(secret *ui.Secret) *pages.GridPage {
+	page := pages.GridPage{}
+	page.SetName(GetName())
 
 	form := tview.NewForm()
 
 	form.
 		SetBorder(false)
 
-	var formTitle       string
+	var formTitle string
 	var formDescription string
-	var formSecret      string
+	var formSecret string
 
-	if Secret != nil {
-		formTitle       = Secret.Title
-		formDescription = Secret.Description
-		formSecret      = Secret.Secret
+	if secret != nil {
+		formTitle = secret.Title
+		formDescription = secret.Description
+		formSecret = secret.Secret
 	}
 
 	form.
@@ -51,9 +43,9 @@ func (r pageFactory) Create() pages.PageInterface {
 		AddPasswordField("Secret", formSecret, 0, '*', nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Save", func() {
-			formTitle       = form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
+			formTitle = form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
 			formDescription = form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret      = form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
+			formSecret = form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
 
 			log.Println("reading folder", ui.InPlainSight.Path)
 			files, err := os.ReadDir(ui.InPlainSight.Path)
@@ -79,7 +71,7 @@ func (r pageFactory) Create() pages.PageInterface {
 				if !file.IsDir() && strings.Contains(file.Name(), ".png") {
 					filePath := fmt.Sprintf("%s/%s", strings.TrimRight(ui.InPlainSight.Path, "/\\"), file.Name())
 
-					if filePath != Secret.FilePath {
+					if filePath != secret.FilePath {
 						continue
 					}
 
@@ -89,26 +81,26 @@ func (r pageFactory) Create() pages.PageInterface {
 						fmt.Sprintf("with pass %#v", ui.InPlainSight.MasterPassword),
 					)
 
-					(*Secret).Title       =  formTitle
-					(*Secret).Description =  formDescription
-					(*Secret).Secret      = 	formSecret
+					(*secret).Title = formTitle
+					(*secret).Description = formDescription
+					(*secret).Secret = formSecret
 
 					err = s.Conceal(
 						filePath,
 						filePath,
-							[]byte(Secret.Serialize()),
-							[]byte(ui.InPlainSight.MasterPassword),
-							uint8(3),
-						)
+						[]byte(secret.Serialize()),
+						[]byte(ui.InPlainSight.MasterPassword),
+						uint8(3),
+					)
 
 					if err == nil {
-						log.Println("secret updated", Secret)
+						log.Println("secret updated", secret)
 
 						ui.InPlainSight.Trigger(events.Event{
 							CreatedAt: time.Now(),
 							EventType: events.UpdatedSecret,
 							Data: map[string]interface{}{
-								"secret": Secret,
+								"secret": secret,
 							},
 						})
 
@@ -147,10 +139,3 @@ func (r pageFactory) Create() pages.PageInterface {
 
 	return &page
 }
-
-func register(records pages.PageFactoryDictionary) pages.PageFactoryInterface {
-	records["edit"] = pageFactory{}
-	return records["edit"]
-}
-
-var _ = register(pages.PageFactories)

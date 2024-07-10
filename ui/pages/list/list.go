@@ -231,8 +231,11 @@ func (r pageFactory) Create() pages.PageInterface {
 			}
 
 		case tcell.KeyCtrlE:
-			editsecret.Secret = filteredSecrets[*selectedListItem]
-			log.Println("editing secret", editsecret.Secret)
+			if page := editsecret.Create(filteredSecrets[*selectedListItem]); page == nil {
+				widgets.ModalError("Generic error")
+			} else {
+				ui.InPlainSight.Pages.AddAndSwitchToPage(newsecret.GetName(), page.GetPrimitive(), true)
+			}
 
 		case tcell.KeyCtrlD:
 			widgets.ModalError("Are you sure you want to delete this secret?")
