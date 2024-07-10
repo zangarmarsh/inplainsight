@@ -2,31 +2,26 @@ package newsecret
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"github.com/zangarmarsh/inplainsight/ui"
 	"github.com/zangarmarsh/inplainsight/ui/events"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"github.com/zangarmarsh/inplainsight/ui/widgets"
-	"log"
-	"os"
-	"strings"
-	"time"
 )
 
-type Page struct {
-	pages.GridPage
-}
-
-type pageFactory struct{}
-
-func (r pageFactory) GetName() string {
+func GetName() string {
 	return "new"
 }
 
-func (r pageFactory) Create() pages.PageInterface {
-	page := Page{}
-	page.SetName(r.GetName())
+func Create() *pages.GridPage {
+	page := pages.GridPage{}
+	page.SetName(GetName())
 
 	form := tview.NewForm()
 
@@ -39,9 +34,9 @@ func (r pageFactory) Create() pages.PageInterface {
 		AddPasswordField("Secret", "", 0, '*', nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Save", func() {
-			formTitle       := form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
+			formTitle := form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
 			formDescription := form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret      := form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
+			formSecret := form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
 
 			log.Println("reading folder", ui.InPlainSight.Path)
 			files, err := os.ReadDir(ui.InPlainSight.Path)
@@ -80,11 +75,11 @@ func (r pageFactory) Create() pages.PageInterface {
 						log.Println("SAVING")
 					}
 
-					 secret := ui.Secret{
-						Title:        formTitle,
-						Description:  formDescription,
-						Secret:      	formSecret,
-						FilePath:     filePath,
+					secret := ui.Secret{
+						Title:       formTitle,
+						Description: formDescription,
+						Secret:      formSecret,
+						FilePath:    filePath,
 					}
 
 					log.Println(
@@ -96,16 +91,21 @@ func (r pageFactory) Create() pages.PageInterface {
 					err = s.Conceal(
 						filePath,
 						filePath,
-							[]byte(secret.Serialize()),
-							[]byte(ui.InPlainSight.MasterPassword),
-							uint8(3),
-						)
+						[]byte(secret.Serialize()),
+						[]byte(ui.InPlainSight.MasterPassword),
+						uint8(3),
+					)
 
 					if err == nil {
+						form.GetFormItemByLabel("Title").(*tview.InputField).SetText("")
+						form.GetFormItemByLabel("Description").(*tview.InputField).SetText("")
+						form.GetFormItemByLabel("Secret").(*tview.InputField).SetText("")
+						ui.InPlainSight.App.SetFocus(form.GetFormItem(0))
+
 						log.Println("added secret", secret)
 
 						ui.InPlainSight.InvolvedFiles = append(ui.InPlainSight.InvolvedFiles, filePath)
-						ui.InPlainSight.Secrets       = append(ui.InPlainSight.Secrets, &secret)
+						ui.InPlainSight.Secrets = append(ui.InPlainSight.Secrets, &secret)
 
 						ui.InPlainSight.Trigger(events.Event{
 							CreatedAt: time.Now(),
@@ -115,7 +115,7 @@ func (r pageFactory) Create() pages.PageInterface {
 							},
 						})
 
-						pages.Navigate("list")
+						ui.InPlainSight.Pages.RemovePage(GetName())
 						break
 					} else {
 						log.Println("error while concealing", err)
@@ -150,10 +150,3 @@ func (r pageFactory) Create() pages.PageInterface {
 
 	return &page
 }
-
-func register(records pages.PageFactoryDictionary) pages.PageFactoryInterface {
-	records["new"] = pageFactory{}
-	return records["new"]
-}
-
-var _ = register(pages.PageFactories)

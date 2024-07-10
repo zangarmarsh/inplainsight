@@ -3,15 +3,16 @@ package pages
 import (
 	"errors"
 	"fmt"
+	"log"
+
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/ui"
-	"log"
-	"time"
 )
 
-
 type PageFactoryDictionary map[string]PageFactoryInterface
+
 var PageFactories = make(PageFactoryDictionary)
+var history []string
 
 type PageFactoryInterface interface {
 	Create() PageInterface
@@ -63,12 +64,20 @@ func Init() {
 }
 
 func Navigate(path string) error {
+	history = append(history, path)
+
 	if PageFactories[path] != nil {
 		ui.InPlainSight.Pages.SwitchToPage(path)
-		time.Sleep(1)
-		ui.InPlainSight.App.ForceDraw()
 		return nil
 	}
 
 	return errors.New(fmt.Sprintf("there's no such page called `%s`", path))
+}
+
+func GoBack() error {
+	page := history[len(history)-1]
+
+	err := Navigate(page)
+
+	return err
 }

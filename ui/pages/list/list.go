@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+	"github.com/zangarmarsh/inplainsight/ui/pages/newsecret"
 	"log"
 	"strings"
 
@@ -83,7 +84,8 @@ func (r pageFactory) Create() pages.PageInterface {
 
 	container := tview.NewFlex()
 	container.SetBorderPadding(0, 0, 1, 1)
-	container.SetTitle(fmt.Sprintf(" inplainsight v%s ", ui.Version)).
+	container.
+		SetTitle(fmt.Sprintf(" inplainsight v%s ", ui.Version)).
 		SetBorder(true)
 
 	container.SetDirection(tview.FlexRow)
@@ -221,18 +223,16 @@ func (r pageFactory) Create() pages.PageInterface {
 		switch event.Key() {
 		case tcell.KeyCtrlN:
 			log.Println("Detected ctrl + n")
-			err := pages.Navigate("new")
 
-			if err != nil {
-				widgets.ModalError("Generic error " + err.Error())
-				ui.InPlainSight.App.ForceDraw()
-				log.Println("generic error" + err.Error())
+			if page := newsecret.Create(); page == nil {
+				widgets.ModalError("Generic error")
+			} else {
+				ui.InPlainSight.Pages.AddAndSwitchToPage(newsecret.GetName(), page.GetPrimitive(), true)
 			}
 
 		case tcell.KeyCtrlE:
 			editsecret.Secret = filteredSecrets[*selectedListItem]
 			log.Println("editing secret", editsecret.Secret)
-			pages.Navigate("edit")
 
 		case tcell.KeyCtrlD:
 			widgets.ModalError("Are you sure you want to delete this secret?")
@@ -253,9 +253,6 @@ func (r pageFactory) Create() pages.PageInterface {
 
 			filteredSecrets = append(filteredSecrets[*selectedListItem:], filteredSecrets[:(*selectedListItem+1)]...)
 			filterResults(resultList, ui.InPlainSight.Secrets)
-
-		default:
-			log.Println("Tasto generico")
 		}
 
 		return event
