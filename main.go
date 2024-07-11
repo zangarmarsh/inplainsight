@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/zangarmarsh/inplainsight/ui"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	_ "github.com/zangarmarsh/inplainsight/ui/pages/list"
@@ -10,9 +11,8 @@ import (
 	_ "github.com/zangarmarsh/inplainsight/ui/pages/register"
 	"io"
 	"log"
+	"os"
 )
-
-var verbosity bool
 
 func main() {
 	{
@@ -29,12 +29,18 @@ func main() {
 	}
 }
 
+// ToDo: handle different verbosity levels rather than just one `v`
 func setLoggingLevel() {
+	var verbosity bool
+
 	flag.BoolVar(&verbosity, "v", false, "allow verbosity")
 	flag.Parse()
 
+	fmt.Println(verbosity)
+
 	if !verbosity {
 		log.SetOutput(io.Discard)
+	} else {
+		log.SetOutput(os.Stdout)
 	}
 }
-
