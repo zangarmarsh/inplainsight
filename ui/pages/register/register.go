@@ -63,6 +63,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			ui.InPlainSight.Path = path
 			ui.InPlainSight.MasterPassword = password
 
+			ui.InPlainSight.Pages.RemovePage(r.GetName())
 			err = pages.Navigate("list")
 
 			s := steganography.Steganography{}

@@ -104,16 +104,17 @@ func Create(secret *ui.Secret) *pages.GridPage {
 							},
 						})
 
-						pages.Navigate("list")
 						break
 					} else {
 						log.Println("error while concealing", err)
 					}
 				}
 			}
+
+			ui.InPlainSight.Pages.RemovePage(GetName())
 		}).
 		AddButton("Back", func() {
-			pages.Navigate("list")
+			ui.InPlainSight.Pages.RemovePage(GetName())
 		})
 
 	grid := tview.NewGrid().
