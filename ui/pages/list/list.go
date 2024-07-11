@@ -233,7 +233,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			if page := editsecret.Create(filteredSecrets[*selectedListItem]); page == nil {
 				widgets.ModalError("Generic error")
 			} else {
-				ui.InPlainSight.Pages.AddAndSwitchToPage(newsecret.GetName(), page.GetPrimitive(), true)
+				ui.InPlainSight.Pages.AddAndSwitchToPage(editsecret.GetName(), page.GetPrimitive(), true)
 			}
 
 		case tcell.KeyCtrlD:
