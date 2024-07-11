@@ -18,7 +18,7 @@ type Page struct {
 	pages.GridPage
 }
 
-type pageFactory struct { }
+type pageFactory struct{}
 
 func (r pageFactory) GetName() string {
 	return "register"
@@ -39,7 +39,7 @@ func (r pageFactory) Create() pages.PageInterface {
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Register", func() {
 			password := form.GetFormItemByLabel("Master Password").(*tview.InputField).GetText()
-			path     := form.GetFormItemByLabel("Pool path").(*tview.InputField).GetText()
+			path := form.GetFormItemByLabel("Pool path").(*tview.InputField).GetText()
 
 			if path[0] == '~' {
 				homeDir, err := os.UserHomeDir()
@@ -51,7 +51,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			files, err := os.ReadDir(path)
 			if err != nil {
 				log.Println(err)
-				widgets.ModalError( err.Error() )
+				widgets.ModalError(err.Error())
 				ui.InPlainSight.App.ForceDraw()
 				return
 			}
@@ -65,39 +65,11 @@ func (r pageFactory) Create() pages.PageInterface {
 
 			err = pages.Navigate("list")
 
-		  s := steganography.Steganography{}
+			s := steganography.Steganography{}
 			var eligibleFiles []os.DirEntry
+
 			for _, file := range files {
-				if !file.IsDir() && strings.Contains(file.Name(), ".png") {
-					eligibleFiles = append(eligibleFiles, file)
-					log.Println("found eligibile file " + file.Name())
-
-					filePath := fmt.Sprintf("%s/%s", strings.TrimRight(path, "/\\"), file.Name())
-					var revealed string
-					revealed, err = s.Reveal(filePath, []byte(password))
-					log.Println(fmt.Sprintf("master password used to reveal %#v", password))
-
-					if err == nil {
-						log.Println(fmt.Sprintf("found secret %#v", revealed) )
-
-						secret := &ui.Secret{}
-						secret.Unserialize(revealed)
-						secret.FilePath = filePath
-
-						ui.InPlainSight.InvolvedFiles = append(ui.InPlainSight.InvolvedFiles, file.Name())
-						ui.InPlainSight.Secrets       = append(ui.InPlainSight.Secrets, secret)
-
-						ui.InPlainSight.Trigger(events.Event{
-							CreatedAt: time.Now(),
-							EventType: events.DiscoveredNewSecret,
-							Data: map[string]interface{}{
-								"secret": *secret,
-							},
-						})
-					} else {
-						log.Println("theres no secret in here")
-					}
-				}
+				go revealSecret(file, eligibleFiles, path, err, s, password)
 			}
 
 			// if err != nil {
@@ -114,32 +86,71 @@ func (r pageFactory) Create() pages.PageInterface {
 
 	flex := tview.NewFlex()
 	flex.SetTitle(fmt.Sprintf(" register - inplainsight v%s ", ui.Version)).
-			 SetBorder(true)
+		SetBorder(true)
 
 	flex.SetDirection(tview.FlexRow)
-	flex.SetBorderPadding(2,2,2,2)
+	flex.SetBorderPadding(2, 2, 2, 2)
 
 	text := tview.NewTextView().
-					      SetText("Greetings, stranger. To get it started you'll just have to set a strong password.\n\n[red::b]Beware:[-:-:-] don't forget it or you won't be able to access to your secrets never again.").
-								SetWordWrap(true).
-								SetDynamicColors(true)
+		SetText(
+			"Greetings, stranger. To get it started you'll just have to set a strong password.\n\n" +
+				"[red::b]Beware:[-:-:-] don't forget it or you won't be able to access to your secrets never again.",
+		).
+		SetWordWrap(true).
+		SetDynamicColors(true)
 
 	flex.AddItem(text, 0, 2, false)
 	flex.AddItem(form, 0, 1, true)
 
 	grid.
 		AddItem(flex, 0, 1, 1, 1, 30, 50, true).
-		AddItem(flex, 0,0 ,3, 3, 0, 0, true)
+		AddItem(flex, 0, 0, 3, 3, 0, 0, true)
 
 	grid.SetBorderPadding(2, 0, 0, 0)
 
-	page.SetPrimitive( grid )
+	page.SetPrimitive(grid)
 
 	return &page
+}
+
+func revealSecret(file os.DirEntry, eligibleFiles []os.DirEntry, path string, err error, s steganography.Steganography, password string) {
+	// ToDo: refactor this entire block keeping in mind that there's a whole lotta of file extensions
+
+	if !file.IsDir() && strings.Contains(file.Name(), ".png") {
+		eligibleFiles = append(eligibleFiles, file)
+		log.Println("found eligibile file " + file.Name())
+
+		filePath := fmt.Sprintf("%s/%s", strings.TrimRight(path, "/\\"), file.Name())
+		var revealed string
+		revealed, err = s.Reveal(filePath, []byte(password))
+		log.Println(fmt.Sprintf("master password used to reveal %#v", password))
+
+		if err == nil {
+			log.Println(fmt.Sprintf("found secret %#v", revealed))
+
+			secret := &ui.Secret{}
+			secret.Unserialize(revealed)
+			secret.FilePath = filePath
+
+			ui.InPlainSight.InvolvedFiles = append(ui.InPlainSight.InvolvedFiles, file.Name())
+			ui.InPlainSight.Secrets = append(ui.InPlainSight.Secrets, secret)
+
+			ui.InPlainSight.Trigger(events.Event{
+				CreatedAt: time.Now(),
+				EventType: events.DiscoveredNewSecret,
+				Data: map[string]interface{}{
+					"secret": *secret,
+				},
+			})
+		} else {
+			log.Println("theres no secret in here")
+		}
+	}
 }
 
 func register(records pages.PageFactoryDictionary) pages.PageFactoryInterface {
 	records["register"] = pageFactory{}
 	return records["register"]
 }
+
 var _ = register(pages.PageFactories)
