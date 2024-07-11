@@ -90,7 +90,7 @@ func (r pageFactory) Create() pages.PageInterface {
 
 	container.SetDirection(tview.FlexRow)
 
-	// Logs
+	// Log box
 	{
 		primitive := tview.NewTextView()
 		primitive.
@@ -161,9 +161,8 @@ func (r pageFactory) Create() pages.PageInterface {
 			logBox.AddLine("Searching for the given key...", logging.Info)
 			logBox.AddSeparator()
 			resultList.Blur()
-			queryInput.Focus(nil)
-			handler := queryInput.InputHandler()
-			handler(event, nil)
+
+			(queryInput.InputHandler())(event, nil)
 
 			return nil
 		}
@@ -254,8 +253,11 @@ func (r pageFactory) Create() pages.PageInterface {
 				3,
 			)
 
-			filteredSecrets = append(filteredSecrets[*selectedListItem:], filteredSecrets[:(*selectedListItem+1)]...)
+			filteredSecrets = append(filteredSecrets[*selectedListItem:], filteredSecrets[:(*selectedListItem)+1]...)
 			filterResults(resultList, ui.InPlainSight.Secrets)
+
+		default:
+
 		}
 
 		return event
