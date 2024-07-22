@@ -1,4 +1,4 @@
-package wrapper
+package medium
 
 import (
 	"errors"
@@ -17,25 +17,27 @@ type SecretWrapperInterface interface {
 	Unravel()
 }
 
+// ToDo rename it to SecretMeta
 type SecretWrapper struct {
-	header   *header.Header
-	path     string
+	Header   *header.Header
+	Path     string
 	resource any
 
-	data        Secret
+	Data        Secret
 	isEncrypted bool
 }
 
 type Secret struct {
-	encrypted string
-	decrypted string
+	Encrypted string
+	Decrypted string
 }
 
-func cutYarnChunks(c chan uint8, yarn []uint8, bits int) {
+// Taken an uint8 array in input, split it into chunks of bits `bits` long
+func CutYarnChunks(c chan uint8, yarn []uint8, bits int) {
 	iterations := int(unsafe.Sizeof(yarn[0])) * 8 / bits
-	for _, singleByte := range yarn {
-		bitmask := uint8(math.Pow(2, float64(bits)) - 1)
+	bitmask := uint8(math.Pow(2, float64(bits)) - 1)
 
+	for _, singleByte := range yarn {
 		for i := 0; i < iterations; i++ {
 			c <- bitmask & (singleByte >> (8 - (i+1)*bits))
 		}
@@ -44,16 +46,18 @@ func cutYarnChunks(c chan uint8, yarn []uint8, bits int) {
 	close(c)
 }
 
-func (s *SecretWrapper) craftYarn(secret string) ([]byte, error) {
+// Given a secret, returns an array of `byte` containing the Header in the first place
+// and then the segmented secret
+func (s *SecretWrapper) CraftYarn(secret string) ([]byte, error) {
 	if len(secret) == 0 {
 		return nil, errors.New("can't add empty secret")
 	}
 
 	var buffer []byte
 
-	// Turn each header property into a `byte` sized value and add it to the very beginning of the buffer
+	// Turn each Header property into a `byte` sized value and add it to the very beginning of the buffer
 	{
-		headerData := reflect.ValueOf(*s.header)
+		headerData := reflect.ValueOf(*s.Header)
 
 		for i := 0; i < headerData.NumField(); i++ {
 			buffer = append(buffer, byte(headerData.Field(i).Uint()))
@@ -62,13 +66,13 @@ func (s *SecretWrapper) craftYarn(secret string) ([]byte, error) {
 
 	/**
 	 *
-	 * Unpacking every rune - hence `int32` data - in four consecutive `byte` sized values
+	 * Unpacking every rune - hence `int32` Data - in four consecutive `byte` sized values
 	 *
 	 * It will ensure each character to be exactly 4x8 bits and thus grants more consistency
 	 * when interweaving/unraveling stuff into media supports.
 	 *
 	 * The native golang conversion to []byte did not fit here because of how it internally handles
-	 * and returns the data, which can be between 1 and 4 bytes long.
+	 * and returns the Data, which can be between 1 and 4 bytes long.
 	 *
 	 */
 	{
