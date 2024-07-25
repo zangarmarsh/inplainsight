@@ -2,7 +2,6 @@ package medium
 
 import (
 	"errors"
-	"fmt"
 	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"github.com/zangarmarsh/inplainsight/core/steganography/header"
 	"math"
@@ -34,12 +33,21 @@ type Secret struct {
 
 // Taken an uint8 array in input, split it into chunks of bits `bits` long
 func CutYarnChunks(c chan uint8, yarn []uint8, bits int) {
-	iterations := int(unsafe.Sizeof(yarn[0])) * 8 / bits
-	bitmask := uint8(math.Pow(2, float64(bits)) - 1)
+	iterations := int(math.Ceil(float64(unsafe.Sizeof(yarn[0])) * float64(8) / float64(bits)))
+	genericBitmask := uint8(math.Pow(2, float64(bits)) - 1)
 
 	for _, singleByte := range yarn {
 		for i := 0; i < iterations; i++ {
-			c <- bitmask & (singleByte >> (8 - (i+1)*bits))
+			offset := 8 - (i+1)*bits
+			bitmask := genericBitmask
+
+			// Adapt the bitmask if bits * channels is not a multiplier of 32
+			if offset < 0 {
+				bitmask >>= int(math.Abs(float64(offset)))
+				offset = 0
+			}
+
+			c <- bitmask & (singleByte >> offset)
 		}
 	}
 
@@ -63,6 +71,8 @@ func (s *SecretWrapper) CraftYarn(secret string) ([]byte, error) {
 			buffer = append(buffer, byte(headerData.Field(i).Uint()))
 		}
 	}
+
+	secret += string(steganography.EndOfMessage)
 
 	/**
 	 *
@@ -88,18 +98,13 @@ func (s *SecretWrapper) CraftYarn(secret string) ([]byte, error) {
 		}
 	}
 
-	// ToDo fix this shit
-	buffer = append(
-		buffer,
-		steganography.EndOfMessage,
-		steganography.EndOfMessage,
-		steganography.EndOfMessage,
-		steganography.EndOfMessage,
-	)
-
 	return buffer, nil
 }
 
 // Todo: fix them up
-func (s *SecretWrapper) Interweave(buffer []byte) { fmt.Println("this is fucked up ~~~~~") }
-func (s *SecretWrapper) Unravel()                 {}
+func (s *SecretWrapper) Interweave(secret string) error {
+	return errors.New("can't use interweave method on generic `secret-wrapper` class")
+}
+func (s *SecretWrapper) Unravel(path string) error {
+	return errors.New("can't use unravel method on generic `secret-wrapper` class")
+}

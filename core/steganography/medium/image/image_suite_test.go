@@ -51,8 +51,8 @@ var _ = Describe("Concealing/Revealing", func() {
 	})
 
 	Context("When a valid png image is concealed", func() {
-		generateBlankImage("500x500")
-		text := "私は日本人です"
+		generateBlankImage("20x20")
+		text := "私は inplainsight です!!"
 
 		It("Stops since there's no text to conceal", func() {
 			secret := image.NewImage(blankSampleFile)
@@ -60,14 +60,13 @@ var _ = Describe("Concealing/Revealing", func() {
 			Expect(err).ShouldNot(BeNil())
 		})
 		//
+
 		It("Conceals text into a test sample", func() {
 			s := image.NewImage(blankSampleFile)
 			Expect(s).ShouldNot(BeNil())
 
 			err := s.Interweave(text)
 			Expect(err).To(BeNil())
-
-			Expect(s.Data.Decrypted).To(BeEquivalentTo(text))
 		})
 
 		It("Reveals previously concealed text from a test sample", func() {
@@ -77,65 +76,4 @@ var _ = Describe("Concealing/Revealing", func() {
 			Expect(s.Data.Decrypted).To(BeEquivalentTo(text))
 		})
 	})
-
-	// maximumCompression := uint8(3)
-	// in := "samples/in/test.png"
-	// out := "samples/out/test.png"
-	// password := []byte("password")
-	//
-	// BeforeEach(func() {
-	// 	s := steganography.Steganography{}
-	// 	Expect(s).ToNot(BeNil())
-	// })
-	//
-	// Context("When a valid png image is concealed", func( ) {
-	// 	By("losing the least three significant bits for each RGB(A) matrix")
-	//
-	// 	It("Stops if there's no text to conceal", func() {
-	// 		s := new(steganography.Steganography)
-	//
-	// 		err := s.Conceal(in, out, nil, password, maximumCompression)
-	// 		Expect(err).Should( Not(BeNil()) )
-	// 	})
-	//
-	// 	It("Conceals successfully", func() {
-	// 		s := new(steganography.Steganography)
-	//
-	// 		err := s.Conceal(in, out, shortText, password, maximumCompression)
-	// 		Expect(err).Should( BeNil() )
-	// 	})
-	//
-	// 	It("Stops if the required compression is way higher than the indicated one", func() {
-	// 		s := new(steganography.Steganography)
-	//
-	// 		err := s.Conceal(in, out, bigText, password, 3)
-	// 		Expect(err).Should( Not( BeNil() ))
-	// 	})
-	// })
-	//
-	// Context("When a png image is revealed", func() {
-	// 	By( "specifying to use the least three significant bits" )
-	//
-	// 	It("Reveals the message", func() {
-	// 		s := new(steganography.Steganography)
-	// 		err := s.Conceal(in, out, shortText, nil, maximumCompression)
-	//
-	// 		revealed, err := s.Reveal(out, nil )
-	// 		Expect(revealed).Should( Equal(string(shortText)) )
-	// 		Expect(err).Should( BeNil() )
-	// 	})
-	// })
-	//
-	// Context("When a png image is revealed using a password", func() {
-	// 	By( "specifying to use the least three significant bits" )
-	//
-	// 	It("Reveals the message", func() {
-	// 		s := new(steganography.Steganography)
-	// 		err := s.Conceal(in, out, shortText, password, maximumCompression)
-	//
-	// 		revealed, err := s.Reveal(out, password)
-	// 		Expect(revealed).Should( Equal(string(shortText)) )
-	// 		Expect(err).Should( BeNil() )
-	// 	})
-	// })
 })

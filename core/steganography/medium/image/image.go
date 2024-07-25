@@ -50,7 +50,7 @@ func (i *Image) Cap() uint64 {
 		uint64(unsafe.Sizeof(uint32(0))) * 8
 }
 
-// Counts the UTF-8 characters currently interwoven
+// Len Counts the UTF-8 characters currently interwoven
 func (i *Image) Len() uint64 {
 	return uint64(len(i.Data.Encrypted))
 }
@@ -60,9 +60,9 @@ func (i *Image) Interweave(secret string) error {
 		return errors.New("Cannot interweave empty secret")
 	}
 
-	// Todo: dinamically determination of the optimal "bits per channel" amount by the overall image size
+	// Todo: dynamic determination of the optimal "bits per channel" amount by the overall image size
 	bitsPerChannel := uint8(bitsPerChannel)
-	bitmask := ^uint8(math.Pow(float64(bitsPerChannel), 2) - 1)
+	bitmask := ^uint8(math.Pow(2, float64(bitsPerChannel)) - 1)
 
 	{
 		headerPtr, err := header.NewHeader(bitsPerChannel, steganography.EndOfMessage)
@@ -79,6 +79,7 @@ func (i *Image) Interweave(secret string) error {
 	}
 
 	// First of all, check if the image has enough space to store the message
+	// Todo check it out, maybe it is not working
 	if uint64(len(secret)) > i.Cap()-i.Len() {
 		return errors.New("secret too long")
 	}
@@ -88,8 +89,6 @@ func (i *Image) Interweave(secret string) error {
 	if err != nil {
 		return err
 	}
-
-	log.Println("yarn crafted", yarn)
 
 	width, height := (*i.resource).Bounds().Size().X, (*i.resource).Bounds().Size().Y
 	output := image.NewNRGBA(image.Rect(0, 0, width, height))
@@ -157,57 +156,86 @@ func (i *Image) Unravel(path string) error {
 		}
 	}
 
+	i.Header = &header.Header{}
+
 	// Let's try to decrypt the header
 	{
 		unraveled := make([]rune, 0)
 		width, height := (*i.resource).Bounds().Size().Y, (*i.resource).Bounds().Size().Y
 
-		bitmask := rune(uint8(math.Pow(2, float64(bitsPerChannel)) - 1))
-		bitsInOneRune := int(unsafe.Sizeof(rune(0))) * 8
-		iterationsPerRune := bitsInOneRune / bitsPerChannel
+		// This could escalate quickly, evaluate if worths using a huge number instead
+		writtenBits := int64(0)
 
-		fmt.Println("iterations per rune", float64(unsafe.Sizeof(rune(0)))*float64(8)/float64(bitsPerChannel))
-
-		(func() {
+		err := (func() error {
 			iterationCounter := 0
+			initialOffset := int(unsafe.Sizeof('\x00')) * 8
+			offset := initialOffset
+			iterationsForOneByte := int(math.Ceil(float64(unsafe.Sizeof(uint8(0))*8) / float64(bitsPerChannel)))
+
 			for y := 0; y < height; y++ {
 				for x := 0; x < width; x++ {
 					r, g, b, _ := (*i.resource).At(x, y).RGBA()
 
 					for _, c := range []uint32{r, g, b} {
-						// fmt.Printf("%.8b\n", uint8(c))
-						// It should automatically truncate the real number part but let's ensure that
-						characterIndex := int(math.Floor(float64(iterationCounter) / float64(iterationsPerRune)))
-						groupOfBitsIndex := iterationCounter % iterationsPerRune
+						bitmask := rune(uint8(math.Pow(2, float64(bitsPerChannel)) - 1))
 
+						// It should automatically truncate the real number part but let's ensure that
+						characterIndex := int(math.Floor(float64(writtenBits / (int64(unsafe.Sizeof('\x00')) * 8))))
+
+						offset -= bitsPerChannel
+
+						// todo: what is this shit doing?
 						if characterIndex >= len(unraveled) {
 							unraveled = append(unraveled, '\x00')
 						}
 
-						unraveled[characterIndex] |= int32(uint8(c)) & bitmask << (int(unsafe.Sizeof('\x00'))*8 - (groupOfBitsIndex+1)*bitsPerChannel)
+						if adjustment := 8 - (iterationCounter%iterationsForOneByte)*bitsPerChannel - bitsPerChannel; adjustment < 0 {
+							adjustment := int(math.Abs(float64(adjustment)))
+
+							bitmask >>= adjustment
+							offset += adjustment
+						}
+
+						if offset < 0 {
+							offset = 0
+						}
+
+						unraveled[characterIndex] |= bitmask & int32(uint8(c)) << offset
 
 						iterationCounter++
+						writtenBits += int64(math.Log2(float64(bitmask + 1)))
 
-						if groupOfBitsIndex == iterationsPerRune-1 &&
-							unraveled[characterIndex] == rune(steganography.EndOfMessage) {
-							return
+						if offset == 0 {
+							if i.Header.MagicNumber != 0 && unraveled[characterIndex] == rune(steganography.EndOfMessage) {
+								unraveled = unraveled[1:]
+								unraveled = unraveled[:len(unraveled)-1]
+
+								return nil
+							}
+
+							if i.Header.MagicNumber == 0 {
+								magicNumberMatched := i.Header.Set(unraveled[0])
+
+								if !magicNumberMatched {
+									return nil
+								}
+							}
+
+							offset = initialOffset
 						}
 					}
 				}
 			}
+
+			return nil
 		})()
 
-		magicNumberMatched, err := i.Header.Set(unraveled[0])
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
 
-		if magicNumberMatched {
-			unraveled = unraveled[1:]
-
-			i.Data.Decrypted = string(unraveled[:len(unraveled)-1])
-		}
+		i.Data.Decrypted = string(unraveled)
 	}
 
 	return nil
