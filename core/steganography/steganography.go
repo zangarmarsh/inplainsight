@@ -1,32 +1,36 @@
-package medium
+package steganography
 
 import (
 	"errors"
-	"github.com/zangarmarsh/inplainsight/core/steganography"
-	"github.com/zangarmarsh/inplainsight/core/steganography/header"
+	_ "image/jpeg"
+	_ "image/png"
 	"math"
 	"reflect"
 	"unsafe"
 )
 
-type SecretWrapperInterface interface {
+const Version uint8 = '\x01'
+const MagicNumber uint8 = '\x78'
+const EndOfMessage uint8 = '\x00'
+
+type SecretInterface interface {
 	Len() uint64
 	Cap() uint64
-	Interweave()
-	Unravel()
-}
 
-// ToDo rename it to SecretMeta
-type SecretWrapper struct {
-	Header   *header.Header
-	Path     string
-	resource any
-
-	Data        Secret
-	isEncrypted bool
+	Interweave(secret string) error
+	Unravel(path string) error
 }
 
 type Secret struct {
+	Header   *Header
+	Path     string
+	resource any
+
+	Data        SecretData
+	isEncrypted bool
+}
+
+type SecretData struct {
 	Encrypted string
 	Decrypted string
 }
@@ -56,7 +60,7 @@ func CutYarnChunks(c chan uint8, yarn []uint8, bits int) {
 
 // Given a secret, returns an array of `byte` containing the Header in the first place
 // and then the segmented secret
-func (s *SecretWrapper) CraftYarn(secret string) ([]byte, error) {
+func (s *Secret) CraftYarn(secret string) ([]byte, error) {
 	if len(secret) == 0 {
 		return nil, errors.New("can't add empty secret")
 	}
@@ -72,7 +76,7 @@ func (s *SecretWrapper) CraftYarn(secret string) ([]byte, error) {
 		}
 	}
 
-	secret += string(steganography.EndOfMessage)
+	secret += string(EndOfMessage)
 
 	/**
 	 *
@@ -101,10 +105,9 @@ func (s *SecretWrapper) CraftYarn(secret string) ([]byte, error) {
 	return buffer, nil
 }
 
-// Todo: fix them up
-func (s *SecretWrapper) Interweave(secret string) error {
+func (s *Secret) Interweave(secret string) error {
 	return errors.New("can't use interweave method on generic `secret-wrapper` class")
 }
-func (s *SecretWrapper) Unravel(path string) error {
+func (s *Secret) Unravel(path string) error {
 	return errors.New("can't use unravel method on generic `secret-wrapper` class")
 }

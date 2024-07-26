@@ -1,8 +1,7 @@
-package header
+package steganography
 
 import (
 	"errors"
-	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"reflect"
 	"unsafe"
 )
@@ -28,7 +27,7 @@ func (h *Header) Set(r rune) bool {
 		*fieldPtr = uint8(bitmask & (r >> (int(unsafe.Sizeof(r))*8 - counter*8 - int(unsafe.Sizeof(uint8(0))*8))))
 	}
 
-	return h.MagicNumber == steganography.MagicNumber
+	return h.MagicNumber == MagicNumber
 }
 
 func NewHeader(maximumCompression, endOfMessage uint8) (*Header, error) {
@@ -37,9 +36,9 @@ func NewHeader(maximumCompression, endOfMessage uint8) (*Header, error) {
 	}
 
 	header := Header{
-		MagicNumber:           steganography.MagicNumber,
+		MagicNumber:           MagicNumber,
 		EndOfMessageDelimiter: endOfMessage,
-		Version:               steganography.Version,
+		Version:               Version,
 	}
 
 	return &header, nil

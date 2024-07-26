@@ -2,10 +2,7 @@ package image
 
 import (
 	"errors"
-	"fmt"
 	"github.com/zangarmarsh/inplainsight/core/steganography"
-	"github.com/zangarmarsh/inplainsight/core/steganography/header"
-	"github.com/zangarmarsh/inplainsight/core/steganography/medium"
 	"image"
 	"image/color"
 	"image/png"
@@ -19,7 +16,7 @@ const bitsPerChannel int = 2
 const channelsPerPixel int = 3
 
 type Image struct {
-	medium.SecretWrapper
+	steganography.Secret
 	resource *image.Image
 }
 
@@ -65,7 +62,7 @@ func (i *Image) Interweave(secret string) error {
 	bitmask := ^uint8(math.Pow(2, float64(bitsPerChannel)) - 1)
 
 	{
-		headerPtr, err := header.NewHeader(bitsPerChannel, steganography.EndOfMessage)
+		headerPtr, err := steganography.NewHeader(bitsPerChannel, steganography.EndOfMessage)
 		if err != nil {
 			return err
 		}
@@ -78,16 +75,15 @@ func (i *Image) Interweave(secret string) error {
 		return errors.New("interweave called before a proper initialization, retry calling `NewImage` method first")
 	}
 
-	// First of all, check if the image has enough space to store the message
-	// Todo check it out, maybe it is not working
-	if uint64(len(secret)) > i.Cap()-i.Len() {
-		return errors.New("secret too long")
-	}
-
 	// You'll need some sewing thread to interweave stuff into the picture :D
 	yarn, err := i.CraftYarn(secret)
 	if err != nil {
 		return err
+	}
+
+	// Check if the image has enough space to store the message
+	if uint64(len(secret)) > i.Cap()-i.Len() {
+		return errors.New("secret too long")
 	}
 
 	width, height := (*i.resource).Bounds().Size().X, (*i.resource).Bounds().Size().Y
@@ -96,38 +92,36 @@ func (i *Image) Interweave(secret string) error {
 	{
 		bitsChan := make(chan uint8)
 
-		go medium.CutYarnChunks(bitsChan, yarn, int(bitsPerChannel))
+		go steganography.CutYarnChunks(bitsChan, yarn, int(bitsPerChannel))
 
-		(func() {
-			cloneExistingPixel := false
-			for y := 0; y < height; y++ {
-				for x := 0; x < width; x++ {
-					r, g, b, _ := (*i.resource).At(x, y).RGBA()
-					red := uint8(r)
-					green := uint8(g)
-					blue := uint8(b)
+		cloneExistingPixel := false
+		for y := 0; y < height; y++ {
+			for x := 0; x < width; x++ {
+				r, g, b, _ := (*i.resource).At(x, y).RGBA()
+				red := uint8(r)
+				green := uint8(g)
+				blue := uint8(b)
 
-					for _, c := range []*uint8{&red, &green, &blue} {
-						if !cloneExistingPixel {
-							bits, ok := <-bitsChan
+				for _, c := range []*uint8{&red, &green, &blue} {
+					if !cloneExistingPixel {
+						bits, ok := <-bitsChan
 
-							if ok {
-								*c = (*c & bitmask) | bits
-							} else {
-								cloneExistingPixel = true
-							}
+						if ok {
+							*c = (*c & bitmask) | bits
+						} else {
+							cloneExistingPixel = true
 						}
 					}
-
-					output.Set(x, y, color.RGBA{
-						R: red,
-						G: green,
-						B: blue,
-						A: ^uint8(0),
-					})
 				}
+
+				output.Set(x, y, color.RGBA{
+					R: red,
+					G: green,
+					B: blue,
+					A: ^uint8(0),
+				})
 			}
-		})()
+		}
 	}
 
 	outFile, err := os.Create((*i).Path)
@@ -156,7 +150,7 @@ func (i *Image) Unravel(path string) error {
 		}
 	}
 
-	i.Header = &header.Header{}
+	i.Header = &steganography.Header{}
 
 	// Let's try to decrypt the header
 	{
@@ -166,7 +160,7 @@ func (i *Image) Unravel(path string) error {
 		// This could escalate quickly, evaluate if worths using a huge number instead
 		writtenBits := int64(0)
 
-		err := (func() error {
+		(func() {
 			iterationCounter := 0
 			initialOffset := int(unsafe.Sizeof('\x00')) * 8
 			offset := initialOffset
@@ -210,14 +204,14 @@ func (i *Image) Unravel(path string) error {
 								unraveled = unraveled[1:]
 								unraveled = unraveled[:len(unraveled)-1]
 
-								return nil
+								return
 							}
 
 							if i.Header.MagicNumber == 0 {
 								magicNumberMatched := i.Header.Set(unraveled[0])
 
 								if !magicNumberMatched {
-									return nil
+									return
 								}
 							}
 
@@ -227,13 +221,8 @@ func (i *Image) Unravel(path string) error {
 				}
 			}
 
-			return nil
+			return
 		})()
-
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
 
 		i.Data.Decrypted = string(unraveled)
 	}
