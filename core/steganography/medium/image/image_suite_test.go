@@ -1,7 +1,7 @@
 package image_test
 
 import (
-	"github.com/zangarmarsh/inplainsight/core/steganography/medium/image"
+	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"os/exec"
 	"testing"
 
@@ -44,7 +44,7 @@ func TestSteganography(t *testing.T) {
 
 var _ = Describe("Concealing/Revealing", func() {
 	Context("When using a non existant image", func() {
-		secret := image.NewImage("/invalid/path/file")
+		secret := steganography.New("/invalid/path/file")
 		It("Should stops gracefully", func() {
 			Expect(secret).To(BeNil())
 		})
@@ -55,14 +55,14 @@ var _ = Describe("Concealing/Revealing", func() {
 		text := "私は inplainsight です!!"
 
 		It("Stops since there's no text to conceal", func() {
-			secret := image.NewImage(blankSampleFile)
+			secret := steganography.New(blankSampleFile)
 			err := secret.Interweave("")
 			Expect(err).ShouldNot(BeNil())
 		})
 		//
 
 		It("Conceals text into a test sample", func() {
-			s := image.NewImage(blankSampleFile)
+			s := steganography.New(blankSampleFile)
 			Expect(s).ShouldNot(BeNil())
 
 			err := s.Interweave(text)
@@ -70,10 +70,10 @@ var _ = Describe("Concealing/Revealing", func() {
 		})
 
 		It("Reveals previously concealed text from a test sample", func() {
-			s := image.NewImage(blankSampleFile)
+			s := steganography.New(blankSampleFile)
 			Expect(s).ShouldNot(BeNil())
 
-			Expect(s.Data.Decrypted).To(BeEquivalentTo(text))
+			Expect(s.Data().Decrypted).To(BeEquivalentTo(text))
 		})
 	})
 })
