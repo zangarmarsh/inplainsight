@@ -19,6 +19,8 @@ type SecretInterface interface {
 
 	Interweave(secret string) error
 	Unravel(path string) error
+
+	Data() *SecretData
 }
 
 type Secret struct {
@@ -26,7 +28,7 @@ type Secret struct {
 	Path     string
 	resource any
 
-	Data        SecretData
+	data        SecretData
 	isEncrypted bool
 }
 
@@ -110,4 +112,17 @@ func (s *Secret) Interweave(secret string) error {
 }
 func (s *Secret) Unravel(path string) error {
 	return errors.New("can't use unravel method on generic `secret-wrapper` class")
+}
+func (S *Secret) Data() *SecretData {
+	return &S.data
+}
+
+func New(path string) SecretInterface {
+	for _, media := range Media {
+		if secret := media(path); secret != nil {
+			return secret
+		}
+	}
+
+	return nil
 }
