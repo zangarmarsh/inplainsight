@@ -49,7 +49,7 @@ func (i *Image) Cap() uint64 {
 
 // Len Counts the UTF-8 characters currently interwoven
 func (i *Image) Len() uint64 {
-	return uint64(len(i.Data.Encrypted))
+	return uint64(len(i.Data().Encrypted))
 }
 
 func (i *Image) Interweave(secret string) error {
@@ -136,7 +136,7 @@ func (i *Image) Interweave(secret string) error {
 		return err
 	}
 
-	i.Data.Decrypted = secret
+	i.Data().Decrypted = secret
 
 	return nil
 }
@@ -224,7 +224,7 @@ func (i *Image) Unravel(path string) error {
 			return
 		})()
 
-		i.Data.Decrypted = string(unraveled)
+		i.Data().Decrypted = string(unraveled)
 	}
 
 	return nil
