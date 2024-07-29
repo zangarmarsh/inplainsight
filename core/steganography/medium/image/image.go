@@ -12,7 +12,7 @@ import (
 	"unsafe"
 )
 
-const bitsPerChannel int = 2
+const bitsPerChannel int = 3
 const channelsPerPixel int = 3
 
 type Image struct {
@@ -98,9 +98,12 @@ func (i *Image) Interweave(secret string) error {
 		for y := 0; y < height; y++ {
 			for x := 0; x < width; x++ {
 				r, g, b, _ := (*i.resource).At(x, y).RGBA()
-				red := uint8(r)
-				green := uint8(g)
-				blue := uint8(b)
+
+				// Values must be right-shifted before casting because otherwise it would just keep the last - potentially random - eight bits,
+				// returning way less precise colors.
+				red := uint8(r >> 8)
+				green := uint8(g >> 8)
+				blue := uint8(b >> 8)
 
 				for _, c := range []*uint8{&red, &green, &blue} {
 					if !cloneExistingPixel {
@@ -247,6 +250,8 @@ func (i *Image) setImage(path string) error {
 	if err != nil {
 		return err
 	}
+
+	log.Printf("color model %v\n\n", img.ColorModel())
 
 	i.Path = path
 
