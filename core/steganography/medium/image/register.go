@@ -1,9 +1,10 @@
 package image
 
 import (
-	"fmt"
 	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"github.com/zangarmarsh/inplainsight/core/utility"
+	"log"
+	"os"
 	"strings"
 )
 
@@ -11,12 +12,12 @@ func init() {
 	steganography.Media = append(
 		steganography.Media,
 		func(filePath string) steganography.SecretInterface {
-			// ToDo: to ensure content integrity it might worth adding a manipulation (such as resizing) on a copy of the image
-			// 			 since http.DetectContentType is not super reliable
+			if _, err := os.Stat(filePath); err != nil {
+				log.Printf("File %v does not exist", filePath)
+				return nil
+			}
 
-			allegedContentType := utility.SniffMimeType(filePath)
-			if strings.HasPrefix(allegedContentType, "image/") {
-				fmt.Println("it is image")
+			if allegedContentType := utility.SniffMimeType(filePath); strings.HasPrefix(allegedContentType, "image/") {
 				return NewImage(filePath)
 			} else {
 				return nil
