@@ -16,7 +16,7 @@ const bitsPerChannel int = 3
 const channelsPerPixel int = 3
 
 type Image struct {
-	steganography.Secret
+	steganography.Host
 	resource *image.Image
 }
 
@@ -139,7 +139,7 @@ func (i *Image) Interweave(secret string) error {
 		return err
 	}
 
-	i.Data().Decrypted = secret
+	i.Data().Encrypted = secret
 
 	return nil
 }
@@ -214,6 +214,7 @@ func (i *Image) Unravel(path string) error {
 								magicNumberMatched := i.Header.Set(unraveled[0])
 
 								if !magicNumberMatched {
+									unraveled = nil
 									return
 								}
 							}
@@ -227,7 +228,7 @@ func (i *Image) Unravel(path string) error {
 			return
 		})()
 
-		i.Data().Decrypted = string(unraveled)
+		i.Data().Encrypted = string(unraveled)
 	}
 
 	return nil
@@ -250,8 +251,6 @@ func (i *Image) setImage(path string) error {
 	if err != nil {
 		return err
 	}
-
-	log.Printf("color model %v\n\n", img.ColorModel())
 
 	i.Path = path
 

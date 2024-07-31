@@ -23,13 +23,23 @@ type SecretInterface interface {
 	Data() *SecretData
 }
 
-type Secret struct {
+type Host struct {
 	Header   *Header
 	Path     string
 	resource any
 
 	data        SecretData
 	isEncrypted bool
+}
+
+func (h *Host) Len() uint64 {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (h *Host) Cap() uint64 {
+	// TODO implement me
+	panic("implement me")
 }
 
 type SecretData struct {
@@ -47,7 +57,7 @@ func CutYarnChunks(c chan uint8, yarn []uint8, bits int) {
 			offset := 8 - (i+1)*bits
 			bitmask := genericBitmask
 
-			// Adapt the bitmask if bits * channels is not a multiplier of 32
+			// Adapt the bitmask if bith * channels is not a multiplier of 32
 			if offset < 0 {
 				bitmask >>= int(math.Abs(float64(offset)))
 				offset = 0
@@ -62,7 +72,7 @@ func CutYarnChunks(c chan uint8, yarn []uint8, bits int) {
 
 // Given a secret, returns an array of `byte` containing the Header in the first place
 // and then the segmented secret
-func (s *Secret) CraftYarn(secret string) ([]byte, error) {
+func (h *Host) CraftYarn(secret string) ([]byte, error) {
 	if len(secret) == 0 {
 		return nil, errors.New("can't add empty secret")
 	}
@@ -71,7 +81,7 @@ func (s *Secret) CraftYarn(secret string) ([]byte, error) {
 
 	// Turn each Header property into a `byte` sized value and add it to the very beginning of the buffer
 	{
-		headerData := reflect.ValueOf(*s.Header)
+		headerData := reflect.ValueOf(*h.Header)
 
 		for i := 0; i < headerData.NumField(); i++ {
 			buffer = append(buffer, byte(headerData.Field(i).Uint()))
@@ -107,14 +117,14 @@ func (s *Secret) CraftYarn(secret string) ([]byte, error) {
 	return buffer, nil
 }
 
-func (s *Secret) Interweave(secret string) error {
+func (h *Host) Interweave(secret string) error {
 	return errors.New("can't use interweave method on generic `secret-wrapper` class")
 }
-func (s *Secret) Unravel(path string) error {
+func (h *Host) Unravel(path string) error {
 	return errors.New("can't use unravel method on generic `secret-wrapper` class")
 }
-func (S *Secret) Data() *SecretData {
-	return &S.data
+func (h *Host) Data() *SecretData {
+	return &h.data
 }
 
 func New(path string) SecretInterface {

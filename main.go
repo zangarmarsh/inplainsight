@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/ui"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	_ "github.com/zangarmarsh/inplainsight/ui/pages/list"
-	_ "github.com/zangarmarsh/inplainsight/ui/pages/login"
 	_ "github.com/zangarmarsh/inplainsight/ui/pages/newsecret"
 	_ "github.com/zangarmarsh/inplainsight/ui/pages/register"
 	"io"
@@ -23,7 +23,7 @@ func main() {
 	ui.Bootstrap()
 	pages.Init()
 
-	err := ui.InPlainSight.App.Run()
+	err := inplainsight.InPlainSight.App.Run()
 	if err != nil {
 		log.Fatalln(err)
 	}

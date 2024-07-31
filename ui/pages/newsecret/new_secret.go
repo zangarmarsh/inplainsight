@@ -2,17 +2,11 @@ package newsecret
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"strings"
-	"time"
-
 	"github.com/rivo/tview"
-	"github.com/zangarmarsh/inplainsight/core/steganography"
-	"github.com/zangarmarsh/inplainsight/ui"
-	"github.com/zangarmarsh/inplainsight/ui/events"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
-	"github.com/zangarmarsh/inplainsight/ui/widgets"
+	"log"
+	"strings"
 )
 
 func GetName() string {
@@ -31,99 +25,52 @@ func Create() *pages.GridPage {
 	form.
 		AddInputField("Title", "", 0, nil, nil).
 		AddInputField("Description", "", 0, nil, nil).
-		AddPasswordField("Secret", "", 0, '*', nil).
+		AddPasswordField("Host", "", 0, '*', nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Save", func() {
 			formTitle := form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
 			formDescription := form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret := form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
+			formSecret := form.GetFormItemByLabel("Host").(*tview.InputField).GetText()
 
-			log.Println("reading folder", ui.InPlainSight.Path)
-			files, err := os.ReadDir(ui.InPlainSight.Path)
+			err := pages.Navigate("list")
 			if err != nil {
-				log.Println(err)
-				widgets.ModalError(err.Error())
-				ui.InPlainSight.App.ForceDraw()
-				return
+				// Todo handle it
+				log.Fatal(err)
 			}
 
-			if len(files) == 0 {
-				log.Println("empty directory")
-				widgets.ModalError("The directory is empty")
-				ui.InPlainSight.App.ForceDraw()
-				return
-			}
+			for fileName, _ := range inplainsight.InPlainSight.Secrets {
+				secret := inplainsight.InPlainSight.Secrets[fileName]
+				secret.Title = formTitle
+				secret.Description = formDescription
+				secret.Secret = formSecret
 
-			err = pages.Navigate("list")
+				log.Println(
+					"Concealing file ",
+					fmt.Sprintf("%s/%s", strings.TrimRight(inplainsight.InPlainSight.Path, "/\\"), fileName),
+					fmt.Sprintf("with pass %#v", inplainsight.InPlainSight.MasterPassword),
+				)
 
-			s := steganography.Steganography{}
+				err := inplainsight.Conceal(
+					fileName,
+					secret,
+				)
 
-			for _, file := range files {
-				if !file.IsDir() && strings.Contains(file.Name(), ".png") {
-					filePath := fmt.Sprintf("%s/%s", strings.TrimRight(ui.InPlainSight.Path, "/\\"), file.Name())
+				if err == nil {
+					form.GetFormItemByLabel("Title").(*tview.InputField).SetText("")
+					form.GetFormItemByLabel("Description").(*tview.InputField).SetText("")
+					form.GetFormItemByLabel("Host").(*tview.InputField).SetText("")
+					inplainsight.InPlainSight.App.SetFocus(form.GetFormItem(0))
 
-					for _, savedSecret := range ui.InPlainSight.Secrets {
-						if savedSecret.FilePath == filePath {
-							filePath = ""
-							break
-						}
-					}
+					log.Println("added secret", secret)
 
-					if filePath == "" {
-						continue
-					} else {
-						log.Println("SAVING")
-					}
-
-					secret := ui.Secret{
-						Title:       formTitle,
-						Description: formDescription,
-						Secret:      formSecret,
-						FilePath:    filePath,
-					}
-
-					log.Println(
-						"Concealing file ",
-						fmt.Sprintf("%s/%s", strings.TrimRight(ui.InPlainSight.Path, "/\\"), file.Name()),
-						fmt.Sprintf("with pass %#v", ui.InPlainSight.MasterPassword),
-					)
-
-					err = s.Conceal(
-						filePath,
-						filePath,
-						[]byte(secret.Serialize()),
-						[]byte(ui.InPlainSight.MasterPassword),
-						uint8(3),
-					)
-
-					if err == nil {
-						form.GetFormItemByLabel("Title").(*tview.InputField).SetText("")
-						form.GetFormItemByLabel("Description").(*tview.InputField).SetText("")
-						form.GetFormItemByLabel("Secret").(*tview.InputField).SetText("")
-						ui.InPlainSight.App.SetFocus(form.GetFormItem(0))
-
-						log.Println("added secret", secret)
-
-						ui.InPlainSight.InvolvedFiles = append(ui.InPlainSight.InvolvedFiles, filePath)
-						ui.InPlainSight.Secrets = append(ui.InPlainSight.Secrets, &secret)
-
-						ui.InPlainSight.Trigger(events.Event{
-							CreatedAt: time.Now(),
-							EventType: events.AddedNewSecret,
-							Data: map[string]interface{}{
-								"secret": secret,
-							},
-						})
-
-						break
-					}
+					break
 				}
 			}
 
-			ui.InPlainSight.Pages.RemovePage(GetName())
+			inplainsight.InPlainSight.Pages.RemovePage(GetName())
 		}).
 		AddButton("Back", func() {
-			ui.InPlainSight.Pages.RemovePage(GetName())
+			inplainsight.InPlainSight.Pages.RemovePage(GetName())
 		})
 
 	grid := tview.NewGrid().
@@ -131,7 +78,7 @@ func Create() *pages.GridPage {
 		SetColumns(0, 0, 0)
 
 	flex := tview.NewFlex()
-	flex.SetTitle(fmt.Sprintf(" new - inplainsight v%s ", ui.Version)).
+	flex.SetTitle(fmt.Sprintf(" new - inplainsight v%s ", inplainsight.Version)).
 		SetBorder(true)
 
 	flex.SetDirection(tview.FlexRow)

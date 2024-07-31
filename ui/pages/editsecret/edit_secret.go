@@ -3,8 +3,7 @@ package editsecret
 import (
 	"fmt"
 	"github.com/rivo/tview"
-	"github.com/zangarmarsh/inplainsight/core/steganography"
-	"github.com/zangarmarsh/inplainsight/ui"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/ui/events"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"github.com/zangarmarsh/inplainsight/ui/widgets"
@@ -18,7 +17,7 @@ func GetName() string {
 	return "edit"
 }
 
-func Create(secret *ui.Secret) *pages.GridPage {
+func Create(secret *inplainsight.Secret) *pages.GridPage {
 	page := pages.GridPage{}
 	page.SetName(GetName())
 
@@ -40,36 +39,34 @@ func Create(secret *ui.Secret) *pages.GridPage {
 	form.
 		AddInputField("Title", formTitle, 0, nil, nil).
 		AddInputField("Description", formDescription, 0, nil, nil).
-		AddPasswordField("Secret", formSecret, 0, '*', nil).
+		AddPasswordField("Host", formSecret, 0, '*', nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Save", func() {
 			formTitle = form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
 			formDescription = form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret = form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
+			formSecret = form.GetFormItemByLabel("Host").(*tview.InputField).GetText()
 
-			log.Println("reading folder", ui.InPlainSight.Path)
-			files, err := os.ReadDir(ui.InPlainSight.Path)
+			log.Println("reading folder", inplainsight.InPlainSight.Path)
+			files, err := os.ReadDir(inplainsight.InPlainSight.Path)
 			if err != nil {
 				log.Println(err)
 				widgets.ModalError(err.Error())
-				ui.InPlainSight.App.ForceDraw()
+				inplainsight.InPlainSight.App.ForceDraw()
 				return
 			}
 
 			if len(files) == 0 {
 				log.Println("empty directory")
 				widgets.ModalError("The directory is empty")
-				ui.InPlainSight.App.ForceDraw()
+				inplainsight.InPlainSight.App.ForceDraw()
 				return
 			}
 
 			err = pages.Navigate("list")
 
-			s := steganography.Steganography{}
-
 			for _, file := range files {
 				if !file.IsDir() && strings.Contains(file.Name(), ".png") {
-					filePath := fmt.Sprintf("%s/%s", strings.TrimRight(ui.InPlainSight.Path, "/\\"), file.Name())
+					filePath := fmt.Sprintf("%s/%s", strings.TrimRight(inplainsight.InPlainSight.Path, "/\\"), file.Name())
 
 					if filePath != secret.FilePath {
 						continue
@@ -77,26 +74,20 @@ func Create(secret *ui.Secret) *pages.GridPage {
 
 					log.Println(
 						"Concealing file ",
-						fmt.Sprintf("%s/%s", strings.TrimRight(ui.InPlainSight.Path, "/\\"), file.Name()),
-						fmt.Sprintf("with pass %#v", ui.InPlainSight.MasterPassword),
+						fmt.Sprintf("%s/%s", strings.TrimRight(inplainsight.InPlainSight.Path, "/\\"), file.Name()),
+						fmt.Sprintf("with pass %#v", inplainsight.InPlainSight.MasterPassword),
 					)
 
 					(*secret).Title = formTitle
 					(*secret).Description = formDescription
 					(*secret).Secret = formSecret
 
-					err = s.Conceal(
-						filePath,
-						filePath,
-						[]byte(secret.Serialize()),
-						[]byte(ui.InPlainSight.MasterPassword),
-						uint8(3),
-					)
+					err := inplainsight.Conceal(filePath, secret)
 
 					if err == nil {
 						log.Println("secret updated", secret)
 
-						ui.InPlainSight.Trigger(events.Event{
+						inplainsight.InPlainSight.Trigger(events.Event{
 							CreatedAt: time.Now(),
 							EventType: events.UpdatedSecret,
 							Data: map[string]interface{}{
@@ -111,10 +102,10 @@ func Create(secret *ui.Secret) *pages.GridPage {
 				}
 			}
 
-			ui.InPlainSight.Pages.RemovePage(GetName())
+			inplainsight.InPlainSight.Pages.RemovePage(GetName())
 		}).
 		AddButton("Back", func() {
-			ui.InPlainSight.Pages.RemovePage(GetName())
+			inplainsight.InPlainSight.Pages.RemovePage(GetName())
 		})
 
 	grid := tview.NewGrid().
@@ -122,7 +113,7 @@ func Create(secret *ui.Secret) *pages.GridPage {
 		SetColumns(0, 0, 0)
 
 	flex := tview.NewFlex()
-	flex.SetTitle(fmt.Sprintf(" new - inplainsight v%s ", ui.Version)).
+	flex.SetTitle(fmt.Sprintf(" new - inplainsight v%s ", inplainsight.Version)).
 		SetBorder(true)
 
 	flex.SetDirection(tview.FlexRow)

@@ -2,6 +2,7 @@ package image_test
 
 import (
 	"github.com/zangarmarsh/inplainsight/core/steganography"
+	"golang.org/x/exp/rand"
 	"os/exec"
 	"testing"
 
@@ -10,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const blankSampleFile = "test/samples/blank.png"
+const blankSampleFile = "test/samples/hummingbird.jpg"
 
 // //go:embed ../../test/texts/short.txt
 // var shortText []byte // can be handled with a compression of one
@@ -22,19 +23,33 @@ const blankSampleFile = "test/samples/blank.png"
 // Parameter `size` must have this structure: [width]x[height]
 func generateBlankImage(size string) error {
 	if err := exec.Command("rm", "rm", blankSampleFile).Run(); err != nil {
-		command := exec.Command(
-			"convert",
-			"convert",
-			"-size",
-			size,
-			"xc:white",
-			blankSampleFile,
-		)
-
-		return command.Run()
-	} else {
 		return err
 	}
+
+	command := exec.Command(
+		"convert",
+		"convert",
+		"-size",
+		size,
+		"xc:white",
+		blankSampleFile,
+	)
+
+	return command.Run()
+}
+
+func generateText(size int) string {
+	var text string
+
+	for c := 0; c < size; c++ {
+		char := rand.Int31()
+		if char == 0 {
+			char++
+		}
+		text += string(char)
+	}
+
+	return text
 }
 
 func TestSteganography(t *testing.T) {
@@ -51,11 +66,13 @@ var _ = Describe("Concealing/Revealing", func() {
 	})
 
 	Context("When a valid png image is concealed", func() {
-		generateBlankImage("20x20")
+		// generateBlankImage("20x20")
 		text := "私は inplainsight です!!"
 
 		It("Stops since there's no text to conceal", func() {
 			secret := steganography.New(blankSampleFile)
+			Expect(secret).NotTo(BeNil())
+
 			err := secret.Interweave("")
 			Expect(err).ShouldNot(BeNil())
 		})

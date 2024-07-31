@@ -20,7 +20,7 @@ import (
 // Where PlainText is a string(16) of plaintext containing the IV and
 // EncryptedContent has a ratio of 1:1 with the relative decryption and is composed by
 // | string(32) the HMAC | string[N = EncryptedContnent - string(32)(HMAC Bits) ] the secret
-func Encrypt( plaintext []byte, key []byte ) ([]byte, error) {
+func Encrypt(plaintext []byte, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -46,11 +46,11 @@ func Encrypt( plaintext []byte, key []byte ) ([]byte, error) {
 }
 
 // Decrypt - See Encrypt for the ciphertext structure
-func Decrypt( ciphertext []byte, key []byte ) ([]byte, error) {
+func Decrypt(ciphertext []byte, key []byte) ([]byte, error) {
 	// Add a minimum length check
 	ciphertext, err := base64.RawStdEncoding.DecodeString(string(ciphertext))
 
-	if len(ciphertext) <= sha256.Size + aes.BlockSize {
+	if len(ciphertext) <= sha256.Size+aes.BlockSize {
 		return nil, errors.New("theres no enough content to decrypt")
 	}
 
@@ -77,12 +77,13 @@ func Decrypt( ciphertext []byte, key []byte ) ([]byte, error) {
 }
 
 func DeriveEncryptionKeysFromPassword(password []byte) (contentEncryptionKey []byte, headerEncryptionKey []byte, err error) {
+	// ToDo: evaluate if worths keeping the header encryption key
 	saltHasher := md5.New()
 	saltHasher.Write(password)
 
 	salt := saltHasher.Sum(nil)
 
-	hashedPassword := argon2.IDKey(password, salt,10,1024*64,2,64)
+	hashedPassword := argon2.IDKey(password, salt, 10, 1024*64, 2, 64)
 	headerEncryptionKey = hashedPassword[32:]
 	contentEncryptionKey = hashedPassword[:32]
 
@@ -96,5 +97,5 @@ func HMAC(content []byte, key []byte) []byte {
 }
 
 func Bits(inputBits int) int {
-	return base64.RawStdEncoding.EncodedLen( inputBits / 8 + aes.BlockSize + sha256.Size ) * 8
+	return base64.RawStdEncoding.EncodedLen(inputBits/8+aes.BlockSize+sha256.Size) * 8
 }

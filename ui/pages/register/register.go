@@ -3,15 +3,12 @@ package register
 import (
 	"fmt"
 	"github.com/rivo/tview"
-	"github.com/zangarmarsh/inplainsight/core/steganography"
-	"github.com/zangarmarsh/inplainsight/ui"
-	"github.com/zangarmarsh/inplainsight/ui/events"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"github.com/zangarmarsh/inplainsight/ui/widgets"
 	"log"
 	"os"
 	"strings"
-	"time"
 )
 
 type Page struct {
@@ -52,7 +49,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			if err != nil {
 				log.Println(err)
 				widgets.ModalError(err.Error())
-				ui.InPlainSight.App.ForceDraw()
+				inplainsight.InPlainSight.App.ForceDraw()
 				return
 			}
 
@@ -60,25 +57,18 @@ func (r pageFactory) Create() pages.PageInterface {
 				log.Println("empty directory")
 			}
 
-			ui.InPlainSight.Path = path
-			ui.InPlainSight.MasterPassword = password
+			inplainsight.InPlainSight.Path = path
+			inplainsight.InPlainSight.MasterPassword = password
 
-			ui.InPlainSight.Pages.RemovePage(r.GetName())
+			inplainsight.InPlainSight.Pages.RemovePage(r.GetName())
 			err = pages.Navigate("list")
 
-			s := steganography.Steganography{}
-			var eligibleFiles []os.DirEntry
-
 			for _, file := range files {
-				go revealSecret(file, eligibleFiles, path, err, s, password)
+				go revealSecret(file)
 			}
-
-			// if err != nil {
-			// 	widgets.ModalError("Generic error")
-			// }
 		}).
 		AddButton("Quit (CTRL + C)", func() {
-			ui.InPlainSight.App.Stop()
+			inplainsight.InPlainSight.App.Stop()
 		})
 
 	grid := tview.NewGrid().
@@ -86,7 +76,7 @@ func (r pageFactory) Create() pages.PageInterface {
 		SetColumns(0, 0, 0)
 
 	flex := tview.NewFlex()
-	flex.SetTitle(fmt.Sprintf(" register - inplainsight v%s ", ui.Version)).
+	flex.SetTitle(fmt.Sprintf(" register - inplainsight v%s ", inplainsight.Version)).
 		SetBorder(true)
 
 	flex.SetDirection(tview.FlexRow)
@@ -114,35 +104,16 @@ func (r pageFactory) Create() pages.PageInterface {
 	return &page
 }
 
-func revealSecret(file os.DirEntry, eligibleFiles []os.DirEntry, path string, err error, s steganography.Steganography, password string) {
-	// ToDo: refactor this entire block keeping in mind that there's a whole lotta of file extensions
-
-	if !file.IsDir() && strings.Contains(file.Name(), ".png") {
-		eligibleFiles = append(eligibleFiles, file)
+func revealSecret(file os.DirEntry) {
+	if !file.IsDir() {
 		log.Println("found eligibile file " + file.Name())
 
-		filePath := fmt.Sprintf("%s/%s", strings.TrimRight(path, "/\\"), file.Name())
-		var revealed string
-		revealed, err = s.Reveal(filePath, []byte(password))
-		log.Println(fmt.Sprintf("master password used to reveal %#v", password))
+		err := inplainsight.Reveal(file.Name())
+
+		log.Println(fmt.Sprintf("master password used to reveal %#v", inplainsight.InPlainSight.MasterPassword))
 
 		if err == nil {
-			log.Println(fmt.Sprintf("found secret %#v", revealed))
-
-			secret := &ui.Secret{}
-			secret.Unserialize(revealed)
-			secret.FilePath = filePath
-
-			ui.InPlainSight.InvolvedFiles = append(ui.InPlainSight.InvolvedFiles, file.Name())
-			ui.InPlainSight.Secrets = append(ui.InPlainSight.Secrets, secret)
-
-			ui.InPlainSight.Trigger(events.Event{
-				CreatedAt: time.Now(),
-				EventType: events.DiscoveredNewSecret,
-				Data: map[string]interface{}{
-					"secret": *secret,
-				},
-			})
+			log.Println(fmt.Sprintf("found secret %#v", inplainsight.InPlainSight.Secrets[file.Name()]))
 		} else {
 			log.Println("theres no secret in here")
 		}

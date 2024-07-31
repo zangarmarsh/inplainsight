@@ -2,14 +2,13 @@ package list
 
 import (
 	"fmt"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/ui/pages/newsecret"
 	"log"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/zangarmarsh/inplainsight/core/steganography"
-	"github.com/zangarmarsh/inplainsight/ui"
 	"github.com/zangarmarsh/inplainsight/ui/events"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"github.com/zangarmarsh/inplainsight/ui/pages/editsecret"
@@ -29,15 +28,15 @@ func (r pageFactory) GetName() string {
 }
 
 var logBox *logging.LogsBox
-var filteredSecrets []*ui.Secret
+var filteredSecrets []*inplainsight.Secret
 var selectedListItem *int
 var searchQuery string
 
 func (r pageFactory) Create() pages.PageInterface {
-	var filterResults = func(resultList *tview.List, secrets []*ui.Secret) {
+	var filterResults = func(resultList *tview.List, secrets map[string]*inplainsight.Secret) {
 		log.Println("Secrets: ")
-		for _, secret := range secrets {
-			log.Printf("%+v\n", secret)
+		for path, secret := range secrets {
+			log.Printf("%+v in file %+v\n", secret, path)
 		}
 
 		lowerCaseSearchQuery := strings.ToLower(strings.TrimLeft(searchQuery, " "))
@@ -52,7 +51,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			pasteIntoClipboard := func() {
 				log.Println("Copying into clipboard")
 				clipboard.Write(clipboard.FmtText, []byte(filteredSecrets[*selectedListItem].Secret))
-				logBox.AddLine(fmt.Sprintf("Secret '%s' copied into clipboard!", filteredSecrets[*selectedListItem].Secret), logging.Info)
+				logBox.AddLine(fmt.Sprintf("Host '%s' copied into clipboard!", filteredSecrets[*selectedListItem].Secret), logging.Info)
 				logBox.AddSeparator()
 			}
 
@@ -65,7 +64,7 @@ func (r pageFactory) Create() pages.PageInterface {
 				)
 
 				resultList.InsertItem(
-					i,
+					int(i[0]),
 					secret.Title,
 					secret.Description,
 					0,
@@ -85,7 +84,7 @@ func (r pageFactory) Create() pages.PageInterface {
 	container := tview.NewFlex()
 	container.SetBorderPadding(0, 0, 1, 1)
 	container.
-		SetTitle(fmt.Sprintf(" inplainsight v%s ", ui.Version)).
+		SetTitle(fmt.Sprintf(" inplainsight v%s ", inplainsight.Version)).
 		SetBorder(true)
 
 	container.SetDirection(tview.FlexRow)
@@ -136,10 +135,9 @@ func (r pageFactory) Create() pages.PageInterface {
 	queryInput.SetBorderPadding(0, 0, 1, 1)
 	queryBox.AddItem(queryInput, 1, 1, 1, 1, 0, 0, true)
 	queryBox.SetBorder(true).SetBorderPadding(0, 0, 0, 0)
-	queryInput.SetTitle("ciao")
 	queryInput.SetChangedFunc(func(text string) {
 		searchQuery = text
-		filterResults(resultList, ui.InPlainSight.Secrets)
+		filterResults(resultList, inplainsight.InPlainSight.Secrets)
 	})
 
 	queryInput.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -183,37 +181,43 @@ func (r pageFactory) Create() pages.PageInterface {
 	container.AddItem(copyright, 1, 1, false)
 	page.SetPrimitive(container)
 
-	ui.InPlainSight.AddEventsListener(
+	inplainsight.InPlainSight.AddEventsListener(
 		[]events.EventType{events.DiscoveredNewSecret},
 		func(event events.Event) {
-			resultList.AddItem(event.Data["secret"].(ui.Secret).Title, event.Data["secret"].(ui.Secret).Description, 0, nil)
-			filterResults(resultList, ui.InPlainSight.Secrets)
-			ui.InPlainSight.App.ForceDraw()
+			resultList.AddItem(
+				event.Data["secret"].(inplainsight.Secret).Title,
+				event.Data["secret"].(inplainsight.Secret).Description,
+				0,
+				nil,
+			)
 
-			logLine := event.Data["secret"].(ui.Secret).Title
-			if event.Data["secret"].(ui.Secret).Description != "" {
-				logLine = logLine + " - " + event.Data["secret"].(ui.Secret).Description
+			filterResults(resultList, inplainsight.InPlainSight.Secrets)
+			inplainsight.InPlainSight.App.ForceDraw()
+
+			logLine := event.Data["secret"].(inplainsight.Secret).Title
+			if event.Data["secret"].(inplainsight.Secret).Description != "" {
+				logLine = logLine + " - " + event.Data["secret"].(inplainsight.Secret).Description
 			}
 
 			logBox.AddLine(fmt.Sprintf("Found secret '%s' in file", logLine), logging.Info)
 			logBox.AddSeparator()
 		})
 
-	ui.InPlainSight.AddEventsListener(
+	inplainsight.InPlainSight.AddEventsListener(
 		[]events.EventType{events.UpdatedSecret},
 		func(event events.Event) {
 			log.Println("event", event)
 
-			filterResults(resultList, ui.InPlainSight.Secrets)
-			ui.InPlainSight.App.ForceDraw()
+			filterResults(resultList, inplainsight.InPlainSight.Secrets)
+			inplainsight.InPlainSight.App.ForceDraw()
 		},
 	)
 
-	ui.InPlainSight.AddEventsListener(
+	inplainsight.InPlainSight.AddEventsListener(
 		[]events.EventType{events.AddedNewSecret},
 		func(event events.Event) {
-			resultList.AddItem(event.Data["secret"].(ui.Secret).Secret, event.Data["secret"].(ui.Secret).Description, 0, nil)
-			filterResults(resultList, ui.InPlainSight.Secrets)
+			resultList.AddItem(event.Data["secret"].(*inplainsight.Secret).Secret, event.Data["secret"].(*inplainsight.Secret).Description, 0, nil)
+			filterResults(resultList, inplainsight.InPlainSight.Secrets)
 			logBox.AddLine("Added a new secret", logging.Info)
 			logBox.AddSeparator()
 		})
@@ -226,35 +230,32 @@ func (r pageFactory) Create() pages.PageInterface {
 			if page := newsecret.Create(); page == nil {
 				widgets.ModalError("Generic error")
 			} else {
-				ui.InPlainSight.Pages.AddAndSwitchToPage(newsecret.GetName(), page.GetPrimitive(), true)
+				inplainsight.InPlainSight.Pages.AddAndSwitchToPage(newsecret.GetName(), page.GetPrimitive(), true)
 			}
 
 		case tcell.KeyCtrlE:
 			if page := editsecret.Create(filteredSecrets[*selectedListItem]); page == nil {
 				widgets.ModalError("Generic error")
 			} else {
-				ui.InPlainSight.Pages.AddAndSwitchToPage(editsecret.GetName(), page.GetPrimitive(), true)
+				inplainsight.InPlainSight.Pages.AddAndSwitchToPage(editsecret.GetName(), page.GetPrimitive(), true)
 			}
 
 		case tcell.KeyCtrlD:
 			widgets.ModalError("Are you sure you want to delete this secret?")
-			ui.InPlainSight.App.ForceDraw()
+			inplainsight.InPlainSight.App.ForceDraw()
 
 			filteredSecrets[*selectedListItem].Secret = ""
 			filteredSecrets[*selectedListItem].Description = ""
 			filteredSecrets[*selectedListItem].Title = ""
 
-			s := steganography.Steganography{}
-			s.Conceal(
-				filteredSecrets[*selectedListItem].FilePath,
-				filteredSecrets[*selectedListItem].FilePath,
-				[]byte(filteredSecrets[*selectedListItem].Serialize()),
-				[]byte(""),
-				3,
-			)
+			// ToDo: find a better way to remove any secret
+			err := inplainsight.Conceal(filteredSecrets[*selectedListItem].FilePath, filteredSecrets[*selectedListItem])
+			if err != nil {
+				return nil
+			}
 
 			filteredSecrets = append(filteredSecrets[*selectedListItem:], filteredSecrets[:(*selectedListItem)+1]...)
-			filterResults(resultList, ui.InPlainSight.Secrets)
+			filterResults(resultList, inplainsight.InPlainSight.Secrets)
 
 		default:
 

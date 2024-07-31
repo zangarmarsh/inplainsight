@@ -3,10 +3,10 @@ package pages
 import (
 	"errors"
 	"fmt"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"log"
 
 	"github.com/rivo/tview"
-	"github.com/zangarmarsh/inplainsight/ui"
 )
 
 type PageFactoryDictionary map[string]PageFactoryInterface
@@ -49,7 +49,7 @@ func Init() {
 	for _, pageFactory := range PageFactories {
 		page := pageFactory.Create()
 
-		ui.InPlainSight.Pages.AddPage(
+		inplainsight.InPlainSight.Pages.AddPage(
 			page.GetName(),
 			page.GetPrimitive(),
 			true,
@@ -67,7 +67,7 @@ func Navigate(path string) error {
 	history = append(history, path)
 
 	if PageFactories[path] != nil {
-		ui.InPlainSight.Pages.SwitchToPage(path)
+		inplainsight.InPlainSight.Pages.SwitchToPage(path)
 		return nil
 	}
 
