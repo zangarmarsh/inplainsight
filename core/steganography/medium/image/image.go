@@ -181,7 +181,8 @@ func (i *Image) Unravel(path string) error {
 
 						offset -= bitsPerChannel
 
-						// todo: what is this shit doing?
+						// Adding lazily one rune at a time.
+						// Todo Performance benchmark since might be more performance-wise reducing the `append` calls using larger buffers
 						if characterIndex >= len(unraveled) {
 							unraveled = append(unraveled, '\x00')
 						}
