@@ -127,7 +127,7 @@ func (i *Image) Interweave(secret string) error {
 		}
 	}
 
-	outFile, err := os.Create((*i).Path)
+	outFile, err := os.Create((*i).GetPath())
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (i *Image) Interweave(secret string) error {
 
 func (i *Image) Unravel(path string) error {
 	// Open up file handle if did not already
-	if i.Path == "" || i.resource == nil {
+	if i.GetPath() == "" || i.resource == nil {
 		err := i.setImage(path)
 		if err != nil {
 			return err
@@ -253,7 +253,7 @@ func (i *Image) setImage(path string) error {
 		return err
 	}
 
-	i.Path = path
+	i.SetPath(path)
 
 	i.resource = &img
 	return nil

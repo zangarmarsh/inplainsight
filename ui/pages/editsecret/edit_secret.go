@@ -68,7 +68,7 @@ func Create(secret *inplainsight.Secret) *pages.GridPage {
 				if !file.IsDir() && strings.Contains(file.Name(), ".png") {
 					filePath := fmt.Sprintf("%s/%s", strings.TrimRight(inplainsight.InPlainSight.Path, "/\\"), file.Name())
 
-					if filePath != secret.FilePath {
+					if filePath != secret.Host.GetPath() {
 						continue
 					}
 
@@ -82,7 +82,7 @@ func Create(secret *inplainsight.Secret) *pages.GridPage {
 					(*secret).Description = formDescription
 					(*secret).Secret = formSecret
 
-					err := inplainsight.Conceal(filePath, secret)
+					err := inplainsight.Conceal(secret)
 
 					if err == nil {
 						log.Println("secret updated", secret)

@@ -21,15 +21,24 @@ type SecretHostInterface interface {
 	Unravel(path string) error
 
 	Data() *SecretData
+	GetPath() string
 }
 
 type Host struct {
 	Header   *Header
-	Path     string
+	path     string
 	resource any
 
 	data        SecretData
 	isEncrypted bool
+}
+
+func (h *Host) GetPath() string {
+	return h.path
+}
+
+func (h *Host) SetPath(path string) {
+	h.path = path
 }
 
 func (h *Host) Len() uint64 {

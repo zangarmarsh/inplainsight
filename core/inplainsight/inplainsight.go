@@ -22,10 +22,11 @@ var InPlainSight = &InPlainSightClient{
 	Secrets: make(map[string]*Secret),
 }
 
-func Conceal(fileName string, secret *Secret) error {
+func Conceal(secret *Secret) error {
 	secretMessage := []byte(secret.Serialize())
 
-	path := fmt.Sprintf("%s/%s", strings.TrimRight(InPlainSight.Path, "/\\"), fileName)
+	// path := fmt.Sprintf("%s/%s", strings.TrimRight(InPlainSight.Path, "/\\"), fileName)
+	path := secret.Host.GetPath()
 
 	if len(secretMessage) == 0 {
 		return errors.New("provided secret is empty")
@@ -56,7 +57,7 @@ func Conceal(fileName string, secret *Secret) error {
 			return err
 		}
 
-		InPlainSight.Secrets[fileName] = secret
+		// InPlainSight.Secrets[fileName] = secret
 
 		InPlainSight.Trigger(events.Event{
 			CreatedAt: time.Now(),
@@ -99,7 +100,6 @@ func Reveal(fileName string) error {
 
 	secret := &Secret{}
 	secret.Unserialize(string(decrypted))
-	secret.FilePath = path
 	secret.Host = host
 
 	InPlainSight.Secrets[fileName] = secret

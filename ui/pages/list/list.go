@@ -249,7 +249,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			filteredSecrets[*selectedListItem].Title = ""
 
 			// ToDo: find a better way to remove any secret
-			err := inplainsight.Conceal(filteredSecrets[*selectedListItem].FilePath, filteredSecrets[*selectedListItem])
+			err := inplainsight.Conceal(filteredSecrets[*selectedListItem])
 			if err != nil {
 				return nil
 			}

@@ -10,7 +10,6 @@ type Secret struct {
 	Title       string
 	Description string
 	Secret      string
-	FilePath    string
 
 	Host steganography.SecretHostInterface
 }

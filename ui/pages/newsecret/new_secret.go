@@ -6,7 +6,6 @@ import (
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"log"
-	"strings"
 )
 
 func GetName() string {
@@ -38,34 +37,33 @@ func Create() *pages.GridPage {
 				log.Fatal(err)
 			}
 
-			for fileName, _ := range inplainsight.InPlainSight.Secrets {
-				secret := inplainsight.InPlainSight.Secrets[fileName]
-				secret.Title = formTitle
-				secret.Description = formDescription
-				secret.Secret = formSecret
+			// for fileName, _ := range inplainsight.InPlainSight.Secrets {
 
-				log.Println(
-					"Concealing file ",
-					fmt.Sprintf("%s/%s", strings.TrimRight(inplainsight.InPlainSight.Path, "/\\"), fileName),
-					fmt.Sprintf("with pass %#v", inplainsight.InPlainSight.MasterPassword),
-				)
+			secret := inplainsight.Secret{}
 
-				err := inplainsight.Conceal(
-					fileName,
-					secret,
-				)
+			secret.Title = formTitle
+			secret.Description = formDescription
+			secret.Secret = formSecret
 
-				if err == nil {
-					form.GetFormItemByLabel("Title").(*tview.InputField).SetText("")
-					form.GetFormItemByLabel("Description").(*tview.InputField).SetText("")
-					form.GetFormItemByLabel("Host").(*tview.InputField).SetText("")
-					inplainsight.InPlainSight.App.SetFocus(form.GetFormItem(0))
+			secret.Host = *(inplainsight.InPlainSight.Hosts.Random(100))
 
-					log.Println("added secret", secret)
+			log.Println(
+				"Concealing file ",
+				secret.Host.GetPath(),
+				fmt.Sprintf("with pass %#v", inplainsight.InPlainSight.MasterPassword),
+			)
 
-					break
-				}
+			err = inplainsight.Conceal(&secret)
+
+			if err == nil {
+				form.GetFormItemByLabel("Title").(*tview.InputField).SetText("")
+				form.GetFormItemByLabel("Description").(*tview.InputField).SetText("")
+				form.GetFormItemByLabel("Host").(*tview.InputField).SetText("")
+				inplainsight.InPlainSight.App.SetFocus(form.GetFormItem(0))
+
+				log.Println("added secret", secret)
 			}
+			// }
 
 			inplainsight.InPlainSight.Pages.RemovePage(GetName())
 		}).
