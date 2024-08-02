@@ -11,7 +11,7 @@ import (
 func init() {
 	steganography.Media = append(
 		steganography.Media,
-		func(filePath string) steganography.SecretInterface {
+		func(filePath string) steganography.SecretHostInterface {
 			if _, err := os.Stat(filePath); err != nil {
 				log.Printf("File %v does not exist", filePath)
 				return nil

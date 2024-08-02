@@ -13,7 +13,7 @@ const Version uint8 = '\x01'
 const MagicNumber uint8 = '\x78'
 const EndOfMessage uint8 = '\x00'
 
-type SecretInterface interface {
+type SecretHostInterface interface {
 	Len() uint64
 	Cap() uint64
 
@@ -127,7 +127,7 @@ func (h *Host) Data() *SecretData {
 	return &h.data
 }
 
-func New(path string) SecretInterface {
+func New(path string) SecretHostInterface {
 	for _, media := range Media {
 		if secret := media(path); secret != nil {
 			return secret

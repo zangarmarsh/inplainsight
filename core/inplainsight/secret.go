@@ -12,7 +12,7 @@ type Secret struct {
 	Secret      string
 	FilePath    string
 
-	Host steganography.SecretInterface
+	Host steganography.SecretHostInterface
 }
 
 func (s *Secret) Serialize() string {
