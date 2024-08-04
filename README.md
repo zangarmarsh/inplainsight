@@ -17,20 +17,29 @@ The media file might be stored locally, but we advise to keep a couple of online
 You only need to remember a master password to get access to your secrets.
 
 ## Roadmap
-- Complete refactoring
-- Output image formats other than actual `png`
-- `stealth mode` file header encryption
+- ~~Complete refactoring~~
+- ~~Output image formats other than actual `png`~~ ( ngl, that was faked atm - needs lots of effort )
+- Improve `Secret`
+  - ~~Multiple secrets in one medium~~
+  - Make `Secret` more abstract and implementable in order to be easily extended
+  - Support `single-file` mode
+  - Give the user the ability to choose which file will be used (default will be `random`)
+  - Exclusive host for one secret
+  - `stealth mode` file header encryption
+- Blank image generation
+- Support new data sources
+  - `HTTPS`
+  - `S3`
+  - `FTP`
+  - `SSH`
 - Dockerization
 - self-hostable version
   - optional `2FA`
-    - Evaluate if it makes sense using it even locally taking care of using strict file permissions
-- Support new data sources
-  - HTTPS
-  - S3
-  - FTP
-  - SSH
+    - Evaluate if it makes sense using it even locally
 - Pool of data-sources wrapped in a file
-- Steganography on the following media formats:
-    - Audio files (MP3/WAV)
-    - MP4
-    - ?
+- Support `hardware keys`
+- Steganography the following media formats:
+    - Audio files `MP3/WAV`
+    - `MP4`
+- Implement `haveibeenpwned` optional periodical checks
+- Browser extension
