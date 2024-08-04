@@ -90,7 +90,7 @@ var _ = Describe("Concealing/Revealing", func() {
 			s := steganography.New(blankSampleFile)
 			Expect(s).ShouldNot(BeNil())
 
-			Expect(s.Data().Decrypted).To(BeEquivalentTo(text))
+			Expect(*s.Data()).To(BeEquivalentTo(text))
 		})
 	})
 })

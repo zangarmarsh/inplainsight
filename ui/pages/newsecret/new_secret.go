@@ -24,12 +24,12 @@ func Create() *pages.GridPage {
 	form.
 		AddInputField("Title", "", 0, nil, nil).
 		AddInputField("Description", "", 0, nil, nil).
-		AddPasswordField("Host", "", 0, '*', nil).
+		AddPasswordField("Container", "", 0, '*', nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Save", func() {
 			formTitle := form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
 			formDescription := form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret := form.GetFormItemByLabel("Host").(*tview.InputField).GetText()
+			formSecret := form.GetFormItemByLabel("Container").(*tview.InputField).GetText()
 
 			err := pages.Navigate("list")
 			if err != nil {
@@ -37,28 +37,18 @@ func Create() *pages.GridPage {
 				log.Fatal(err)
 			}
 
-			// for fileName, _ := range inplainsight.InPlainSight.Secrets {
-
 			secret := inplainsight.Secret{}
 
 			secret.Title = formTitle
 			secret.Description = formDescription
 			secret.Secret = formSecret
 
-			secret.Host = *(inplainsight.InPlainSight.Hosts.Random(100))
-
-			log.Println(
-				"Concealing file ",
-				secret.Host.GetPath(),
-				fmt.Sprintf("with pass %#v", inplainsight.InPlainSight.MasterPassword),
-			)
-
 			err = inplainsight.Conceal(&secret)
 
 			if err == nil {
 				form.GetFormItemByLabel("Title").(*tview.InputField).SetText("")
 				form.GetFormItemByLabel("Description").(*tview.InputField).SetText("")
-				form.GetFormItemByLabel("Host").(*tview.InputField).SetText("")
+				form.GetFormItemByLabel("Container").(*tview.InputField).SetText("")
 				inplainsight.InPlainSight.App.SetFocus(form.GetFormItem(0))
 
 				log.Println("added secret", secret)

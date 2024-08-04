@@ -33,8 +33,7 @@ var selectedListItem *int
 var searchQuery string
 
 func (r pageFactory) Create() pages.PageInterface {
-	var filterResults = func(resultList *tview.List, secrets map[string]*inplainsight.Secret) {
-		log.Println("Secrets: ")
+	var filterResults = func(resultList *tview.List, secrets []*inplainsight.Secret) {
 		for path, secret := range secrets {
 			log.Printf("%+v in file %+v\n", secret, path)
 		}
@@ -47,11 +46,11 @@ func (r pageFactory) Create() pages.PageInterface {
 			selectedListItem = &i
 		})
 
-		for i, secret := range secrets {
+		for index, secret := range secrets {
 			pasteIntoClipboard := func() {
 				log.Println("Copying into clipboard")
 				clipboard.Write(clipboard.FmtText, []byte(filteredSecrets[*selectedListItem].Secret))
-				logBox.AddLine(fmt.Sprintf("Host '%s' copied into clipboard!", filteredSecrets[*selectedListItem].Secret), logging.Info)
+				logBox.AddLine(fmt.Sprintf("Container '%s' copied into clipboard!", filteredSecrets[*selectedListItem].Secret), logging.Info)
 				logBox.AddSeparator()
 			}
 
@@ -64,7 +63,7 @@ func (r pageFactory) Create() pages.PageInterface {
 				)
 
 				resultList.InsertItem(
-					int(i[0]),
+					index,
 					secret.Title,
 					secret.Description,
 					0,

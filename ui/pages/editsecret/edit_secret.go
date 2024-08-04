@@ -39,12 +39,12 @@ func Create(secret *inplainsight.Secret) *pages.GridPage {
 	form.
 		AddInputField("Title", formTitle, 0, nil, nil).
 		AddInputField("Description", formDescription, 0, nil, nil).
-		AddPasswordField("Host", formSecret, 0, '*', nil).
+		AddPasswordField("Container", formSecret, 0, '*', nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Save", func() {
 			formTitle = form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
 			formDescription = form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret = form.GetFormItemByLabel("Host").(*tview.InputField).GetText()
+			formSecret = form.GetFormItemByLabel("Container").(*tview.InputField).GetText()
 
 			log.Println("reading folder", inplainsight.InPlainSight.Path)
 			files, err := os.ReadDir(inplainsight.InPlainSight.Path)
@@ -68,7 +68,7 @@ func Create(secret *inplainsight.Secret) *pages.GridPage {
 				if !file.IsDir() && strings.Contains(file.Name(), ".png") {
 					filePath := fmt.Sprintf("%s/%s", strings.TrimRight(inplainsight.InPlainSight.Path, "/\\"), file.Name())
 
-					if filePath != secret.Host.GetPath() {
+					if filePath != secret.Container.Host.GetPath() {
 						continue
 					}
 

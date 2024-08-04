@@ -1,31 +1,36 @@
 package inplainsight
 
 import (
-	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"log"
 	"strings"
 )
 
+// ToDo: add magic number
 type Secret struct {
 	Title       string
 	Description string
 	Secret      string
 
-	Host steganography.SecretHostInterface
+	Container *SecretsContainer
 }
 
 func (s *Secret) Serialize() string {
 	return s.Title + secretSeparator + s.Description + secretSeparator + s.Secret
 }
 
-func (s *Secret) Unserialize(serialized string) {
+func UnserializeSecret(serialized string) *Secret {
+	secret := Secret{}
+
 	fields := strings.Split(serialized, secretSeparator)
 
 	if len(fields) == 3 {
-		s.Title = fields[0]
-		s.Description = fields[1]
-		s.Secret = fields[2]
+		secret.Title = fields[0]
+		secret.Description = fields[1]
+		secret.Secret = fields[2]
+
+		return &secret
 	} else {
 		log.Printf("Cannot unserialize serialized secret %#v\n", serialized)
+		return nil
 	}
 }

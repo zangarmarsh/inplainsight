@@ -30,8 +30,9 @@ func (r pageFactory) Create() pages.PageInterface {
 	form.
 		SetBorder(false)
 
+	// ToDo remove default values and autosave pool path on user choice
 	form.
-		AddPasswordField("Master Password", "", 0, '*', nil).
+		AddPasswordField("Master Password", "password", 0, '*', nil).
 		AddInputField("Pool path", "~/Pictures/passwords/", 0, nil, nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Register", func() {
@@ -113,7 +114,7 @@ func revealSecret(file os.DirEntry) {
 		log.Println(fmt.Sprintf("master password used to reveal %#v", inplainsight.InPlainSight.MasterPassword))
 
 		if err == nil {
-			log.Println(fmt.Sprintf("found secret %#v", inplainsight.InPlainSight.Secrets[file.Name()]))
+			log.Println(fmt.Sprintf("found secret in %v", file.Name()))
 		} else {
 			log.Println("theres no secret in here")
 		}

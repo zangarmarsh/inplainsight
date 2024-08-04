@@ -11,8 +11,9 @@ type InPlainSightClient struct {
 	App   *tview.Application
 	Pages *tview.Pages
 
-	Secrets map[string]*Secret
-	Hosts   PoolOfHosts
+	Secrets []*Secret
+
+	Hosts HostsPool
 
 	MasterPassword string
 	Path           string

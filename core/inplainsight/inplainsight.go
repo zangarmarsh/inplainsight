@@ -6,6 +6,7 @@ import (
 	"github.com/zangarmarsh/inplainsight/core/cryptography"
 	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"github.com/zangarmarsh/inplainsight/ui/events"
+	"log"
 	"strings"
 	"time"
 
@@ -19,14 +20,13 @@ const (
 const secretSeparator = "\x02"
 
 var InPlainSight = &InPlainSightClient{
-	Secrets: make(map[string]*Secret),
+	Hosts: *NewHostsPool(),
 }
 
 func Conceal(secret *Secret) error {
+	// ToDo maybe worth creating a isEmpty() method on Secret
 	secretMessage := []byte(secret.Serialize())
-
-	// path := fmt.Sprintf("%s/%s", strings.TrimRight(InPlainSight.Path, "/\\"), fileName)
-	path := secret.Host.GetPath()
+	secretMessage = append(secretMessage, separator)
 
 	if len(secretMessage) == 0 {
 		return errors.New("provided secret is empty")
@@ -35,29 +35,31 @@ func Conceal(secret *Secret) error {
 	var contentEncryptionKey []byte
 	var err error
 
-	if len(InPlainSight.MasterPassword) != 0 {
-		contentEncryptionKey, _, err = cryptography.DeriveEncryptionKeysFromPassword([]byte(InPlainSight.MasterPassword))
+	// At this point there should be already a bunch of secret hosts
+	if secret.Container = InPlainSight.Hosts.Random(len(secretMessage)); secret.Container != nil {
+		if len(InPlainSight.MasterPassword) != 0 {
+			contentEncryptionKey, _, err = cryptography.DeriveEncryptionKeysFromPassword([]byte(InPlainSight.MasterPassword))
+			if err != nil {
+				return err
+			}
+
+			secret.Container.Add(secret)
+			secretMessage = []byte(secret.Container.Serialize())
+
+			secretMessage, err = cryptography.Encrypt(secretMessage, contentEncryptionKey)
+			if err != nil {
+				return err
+			}
+		}
+
+		log.Printf("Media at %v (%d/%d) has been chosen to host secret %+v", secret.Container.Host.GetPath(), secret.Container.Host.Len(), secret.Container.Host.Cap(), secret)
+
+		err = secret.Container.Host.Interweave(string(secretMessage))
 		if err != nil {
 			return err
 		}
 
-		secretMessage, err = cryptography.Encrypt(secretMessage, contentEncryptionKey)
-		if err != nil {
-			return err
-		}
-	}
-
-	if secret.Host == nil {
-		secret.Host = steganography.New(path)
-	}
-
-	if secret.Host != nil {
-		err = secret.Host.Interweave(string(secretMessage))
-		if err != nil {
-			return err
-		}
-
-		// InPlainSight.Secrets[fileName] = secret
+		InPlainSight.Secrets = append(InPlainSight.Secrets, secret)
 
 		InPlainSight.Trigger(events.Event{
 			CreatedAt: time.Now(),
@@ -66,7 +68,6 @@ func Conceal(secret *Secret) error {
 				"secret": secret,
 			},
 		})
-
 	} else {
 		return errors.New("unable to interweave secret")
 	}
@@ -79,39 +80,41 @@ func Reveal(fileName string) error {
 	path := fmt.Sprintf("%s/%s", strings.TrimRight(InPlainSight.Path, "/\\"), fileName)
 	host := steganography.New(path)
 
-	if host != nil && len(host.Data().Encrypted) > 0 {
-		var contentEncryptionKey []byte
-		var err error
+	if host != nil {
+		container := SecretsContainer{Host: host}
 
-		contentEncryptionKey, _, err = cryptography.DeriveEncryptionKeysFromPassword(
-			[]byte(InPlainSight.MasterPassword),
-		)
+		if len(*host.Data()) > 0 {
+			var contentEncryptionKey []byte
+			var err error
 
-		if err != nil {
-			return err
+			contentEncryptionKey, _, err = cryptography.DeriveEncryptionKeysFromPassword(
+				[]byte(InPlainSight.MasterPassword),
+			)
+			if err != nil {
+				return err
+			}
+
+			decrypted, err = cryptography.Decrypt([]byte(*host.Data()), contentEncryptionKey)
+			if err != nil {
+				return err
+			}
+
+			container.Unserialize(string(decrypted))
+
+			for _, secret := range container.secrets {
+				InPlainSight.Secrets = append(InPlainSight.Secrets, &secret)
+
+				InPlainSight.Trigger(events.Event{
+					CreatedAt: time.Now(),
+					EventType: events.DiscoveredNewSecret,
+					Data: map[string]interface{}{
+						"secret": secret,
+					},
+				})
+			}
 		}
 
-		decrypted, err = cryptography.Decrypt([]byte(host.Data().Encrypted), contentEncryptionKey)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	secret := &Secret{}
-	secret.Unserialize(string(decrypted))
-	secret.Host = host
-
-	InPlainSight.Secrets[fileName] = secret
-
-	if decrypted != nil {
-		InPlainSight.Trigger(events.Event{
-			CreatedAt: time.Now(),
-			EventType: events.DiscoveredNewSecret,
-			Data: map[string]interface{}{
-				"secret": *secret,
-			},
-		})
+		InPlainSight.Hosts.Add(&container)
 	}
 
 	return nil

@@ -1,24 +1,29 @@
 package inplainsight
 
 import (
-	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"golang.org/x/exp/rand"
 )
 
-type PoolOfHosts struct {
-	pool []*steganography.SecretHostInterface
+type HostsPool struct {
+	pool []*SecretsContainer
 }
 
-func (p *PoolOfHosts) Add(host *steganography.SecretHostInterface) {
+func NewHostsPool() *HostsPool {
+	return &HostsPool{
+		pool: make([]*SecretsContainer, 0),
+	}
+}
+
+func (p *HostsPool) Add(host *SecretsContainer) {
 	p.pool = append(p.pool, host)
 }
 
-func (p *PoolOfHosts) Random(requiredSpace int) *steganography.SecretHostInterface {
-	var eligibles []*steganography.SecretHostInterface
+func (p *HostsPool) Random(requiredSpace int) *SecretsContainer {
+	var eligibles []*SecretsContainer
 
-	for _, host := range p.pool {
-		if int((*host).Cap()-(*host).Len()) >= requiredSpace {
-			eligibles = append(eligibles, host)
+	for _, container := range p.pool {
+		if int((*container).Host.Cap()-(*container).Host.Len()) >= requiredSpace {
+			eligibles = append(eligibles, container)
 		}
 	}
 

@@ -13,7 +13,9 @@ const Version uint8 = '\x01'
 const MagicNumber uint8 = '\x78'
 const EndOfMessage uint8 = '\x00'
 
-type SecretHostInterface interface {
+type SecretData string
+
+type HostInterface interface {
 	Len() uint64
 	Cap() uint64
 
@@ -49,11 +51,6 @@ func (h *Host) Len() uint64 {
 func (h *Host) Cap() uint64 {
 	// TODO implement me
 	panic("implement me")
-}
-
-type SecretData struct {
-	Encrypted string
-	Decrypted string
 }
 
 // Taken an uint8 array in input, split it into chunks of bits `bits` long
@@ -136,7 +133,7 @@ func (h *Host) Data() *SecretData {
 	return &h.data
 }
 
-func New(path string) SecretHostInterface {
+func New(path string) HostInterface {
 	for _, media := range Media {
 		if secret := media(path); secret != nil {
 			return secret
