@@ -53,7 +53,6 @@ func Create() *pages.GridPage {
 
 				log.Println("added secret", secret)
 			}
-			// }
 
 			inplainsight.InPlainSight.Pages.RemovePage(GetName())
 		}).
