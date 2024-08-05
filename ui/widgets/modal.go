@@ -22,17 +22,21 @@ func ModalSuccess(text string) tview.Primitive {
 	return modalSuccess
 }
 
-func ModalError(text string) tview.Primitive {
+func ModalAlert(text string, callback func()) tview.Primitive {
 	pageName := "modal-error"
+	okButtonTxt := "OK"
 
 	modalError := tview.NewModal()
-	modalError.AddButtons([]string{"OK"})
+	modalError.AddButtons([]string{"Cancel", okButtonTxt})
 
 	modalError.
 		SetText(text).
 		SetFocus(0).
 		SetBackgroundColor(tcell.ColorRed).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == okButtonTxt && callback != nil {
+				callback()
+			}
 			inplainsight.InPlainSight.Pages.RemovePage(pageName)
 		})
 
