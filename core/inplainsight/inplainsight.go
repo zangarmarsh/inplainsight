@@ -92,6 +92,16 @@ func Conceal(secret *Secret) error {
 				},
 			})
 		}
+
+		// Clean up removable secret once they have been physically removed from the medium
+		for i, item := range InPlainSight.Secrets {
+			if item.deleatable {
+				log.Println("Secret", item, "is deleatable")
+				InPlainSight.Secrets = append(InPlainSight.Secrets[:i], InPlainSight.Secrets[i+1:]...)
+
+				break
+			}
+		}
 	} else {
 		return errors.New("unable to interweave secret")
 	}
