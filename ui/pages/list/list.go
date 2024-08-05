@@ -184,8 +184,8 @@ func (r pageFactory) Create() pages.PageInterface {
 		[]events.EventType{events.DiscoveredNewSecret},
 		func(event events.Event) {
 			resultList.AddItem(
-				event.Data["secret"].(inplainsight.Secret).Title,
-				event.Data["secret"].(inplainsight.Secret).Description,
+				event.Data["secret"].(*inplainsight.Secret).Title,
+				event.Data["secret"].(*inplainsight.Secret).Description,
 				0,
 				nil,
 			)
@@ -193,9 +193,9 @@ func (r pageFactory) Create() pages.PageInterface {
 			filterResults(resultList, inplainsight.InPlainSight.Secrets)
 			inplainsight.InPlainSight.App.ForceDraw()
 
-			logLine := event.Data["secret"].(inplainsight.Secret).Title
-			if event.Data["secret"].(inplainsight.Secret).Description != "" {
-				logLine = logLine + " - " + event.Data["secret"].(inplainsight.Secret).Description
+			logLine := event.Data["secret"].(*inplainsight.Secret).Title
+			if event.Data["secret"].(*inplainsight.Secret).Description != "" {
+				logLine = logLine + " - " + event.Data["secret"].(*inplainsight.Secret).Description
 			}
 
 			logBox.AddLine(fmt.Sprintf("Found secret '%s' in file", logLine), logging.Info)

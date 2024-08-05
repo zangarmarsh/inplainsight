@@ -24,6 +24,8 @@ var InPlainSight = &InPlainSightClient{
 }
 
 func Conceal(secret *Secret) error {
+	isCreating := false
+
 	// ToDo maybe worth creating a isEmpty() method on Secret
 	secretMessage := []byte(secret.Serialize())
 	secretMessage = append(secretMessage, separator)
@@ -35,15 +37,27 @@ func Conceal(secret *Secret) error {
 	var contentEncryptionKey []byte
 	var err error
 
-	// At this point there should be already a bunch of secret hosts
-	if secret.Container = InPlainSight.Hosts.Random(len(secretMessage)); secret.Container != nil {
+	// If `secret.Container` is null it will likely mean that we're creating it
+	if secret.Container == nil {
+		isCreating = true
+
+		// At this point there should be already a bunch of secret hosts
+		secret.Container = InPlainSight.Hosts.Random(len(secretMessage))
+
+		if secret.Container != nil {
+			secret.Container.Add(secret)
+		}
+	}
+
+	if secret.Container != nil {
 		if len(InPlainSight.MasterPassword) != 0 {
 			contentEncryptionKey, _, err = cryptography.DeriveEncryptionKeysFromPassword([]byte(InPlainSight.MasterPassword))
 			if err != nil {
 				return err
 			}
 
-			secret.Container.Add(secret)
+			log.Printf("Secret: %+v (%+v)", secret, &secret)
+			log.Printf("Updating container file with secrets: %+v", secret.Container.secrets)
 			secretMessage = []byte(secret.Container.Serialize())
 
 			secretMessage, err = cryptography.Encrypt(secretMessage, contentEncryptionKey)
@@ -59,15 +73,25 @@ func Conceal(secret *Secret) error {
 			return err
 		}
 
-		InPlainSight.Secrets = append(InPlainSight.Secrets, secret)
+		if isCreating {
+			InPlainSight.Secrets = append(InPlainSight.Secrets, secret)
 
-		InPlainSight.Trigger(events.Event{
-			CreatedAt: time.Now(),
-			EventType: events.AddedNewSecret,
-			Data: map[string]interface{}{
-				"secret": secret,
-			},
-		})
+			InPlainSight.Trigger(events.Event{
+				CreatedAt: time.Now(),
+				EventType: events.AddedNewSecret,
+				Data: map[string]interface{}{
+					"secret": secret,
+				},
+			})
+		} else {
+			InPlainSight.Trigger(events.Event{
+				CreatedAt: time.Now(),
+				EventType: events.UpdatedSecret,
+				Data: map[string]interface{}{
+					"secret": secret,
+				},
+			})
+		}
 	} else {
 		return errors.New("unable to interweave secret")
 	}
@@ -102,7 +126,8 @@ func Reveal(fileName string) error {
 			container.Unserialize(string(decrypted))
 
 			for _, secret := range container.secrets {
-				InPlainSight.Secrets = append(InPlainSight.Secrets, &secret)
+				secret.Container = &container
+				InPlainSight.Secrets = append(InPlainSight.Secrets, secret)
 
 				InPlainSight.Trigger(events.Event{
 					CreatedAt: time.Now(),

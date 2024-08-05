@@ -9,7 +9,7 @@ const separator uint8 = '\x03'
 
 // SecretsContainer is a convenient wrapper which contains several Secret objects within the same host
 type SecretsContainer struct {
-	secrets []Secret
+	secrets []*Secret
 	Host    steganography.HostInterface
 }
 
@@ -25,12 +25,12 @@ func (c *SecretsContainer) Unserialize(content string) {
 	for _, singleSecretContent := range strings.Split(content, string(separator)) {
 		if len(singleSecretContent) > 0 {
 			if secret := UnserializeSecret(singleSecretContent); secret != nil {
-				c.secrets = append(c.secrets, *secret)
+				c.secrets = append(c.secrets, secret)
 			}
 		}
 	}
 }
 
 func (c *SecretsContainer) Add(secret *Secret) {
-	c.secrets = append(c.secrets, *secret)
+	c.secrets = append(c.secrets, secret)
 }

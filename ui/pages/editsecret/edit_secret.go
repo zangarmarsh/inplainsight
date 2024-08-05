@@ -4,13 +4,8 @@ import (
 	"fmt"
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
-	"github.com/zangarmarsh/inplainsight/ui/events"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
-	"github.com/zangarmarsh/inplainsight/ui/widgets"
 	"log"
-	"os"
-	"strings"
-	"time"
 )
 
 func GetName() string {
@@ -39,67 +34,25 @@ func Create(secret *inplainsight.Secret) *pages.GridPage {
 	form.
 		AddInputField("Title", formTitle, 0, nil, nil).
 		AddInputField("Description", formDescription, 0, nil, nil).
-		AddPasswordField("Container", formSecret, 0, '*', nil).
+		AddPasswordField("Secret", formSecret, 0, '*', nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Save", func() {
 			formTitle = form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
 			formDescription = form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret = form.GetFormItemByLabel("Container").(*tview.InputField).GetText()
+			formSecret = form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
 
-			log.Println("reading folder", inplainsight.InPlainSight.Path)
-			files, err := os.ReadDir(inplainsight.InPlainSight.Path)
-			if err != nil {
-				log.Println(err)
-				widgets.ModalError(err.Error())
-				inplainsight.InPlainSight.App.ForceDraw()
-				return
-			}
+			err := pages.Navigate("list")
 
-			if len(files) == 0 {
-				log.Println("empty directory")
-				widgets.ModalError("The directory is empty")
-				inplainsight.InPlainSight.App.ForceDraw()
-				return
-			}
+			(*secret).Title = formTitle
+			(*secret).Description = formDescription
+			(*secret).Secret = formSecret
 
-			err = pages.Navigate("list")
+			err = inplainsight.Conceal(secret)
 
-			for _, file := range files {
-				if !file.IsDir() && strings.Contains(file.Name(), ".png") {
-					filePath := fmt.Sprintf("%s/%s", strings.TrimRight(inplainsight.InPlainSight.Path, "/\\"), file.Name())
-
-					if filePath != secret.Container.Host.GetPath() {
-						continue
-					}
-
-					log.Println(
-						"Concealing file ",
-						fmt.Sprintf("%s/%s", strings.TrimRight(inplainsight.InPlainSight.Path, "/\\"), file.Name()),
-						fmt.Sprintf("with pass %#v", inplainsight.InPlainSight.MasterPassword),
-					)
-
-					(*secret).Title = formTitle
-					(*secret).Description = formDescription
-					(*secret).Secret = formSecret
-
-					err := inplainsight.Conceal(secret)
-
-					if err == nil {
-						log.Println("secret updated", secret)
-
-						inplainsight.InPlainSight.Trigger(events.Event{
-							CreatedAt: time.Now(),
-							EventType: events.UpdatedSecret,
-							Data: map[string]interface{}{
-								"secret": secret,
-							},
-						})
-
-						break
-					} else {
-						log.Println("error while concealing", err)
-					}
-				}
+			if err == nil {
+				log.Println("secret updated", secret)
+			} else {
+				log.Println("error while concealing", err)
 			}
 
 			inplainsight.InPlainSight.Pages.RemovePage(GetName())
