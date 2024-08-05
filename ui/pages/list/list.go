@@ -33,6 +33,7 @@ var selectedListItem *int
 var searchQuery string
 
 func (r pageFactory) Create() pages.PageInterface {
+	// Todo find a smarter way to filter the results
 	var filterResults = func(resultList *tview.List, secrets []*inplainsight.Secret) {
 		for path, secret := range secrets {
 			log.Printf("%+v in file %+v\n", secret, path)
@@ -227,34 +228,31 @@ func (r pageFactory) Create() pages.PageInterface {
 			log.Println("Detected ctrl + n")
 
 			if page := newsecret.Create(); page == nil {
-				widgets.ModalError("Generic error")
+				widgets.ModalAlert("Generic error", nil)
 			} else {
 				inplainsight.InPlainSight.Pages.AddAndSwitchToPage(newsecret.GetName(), page.GetPrimitive(), true)
 			}
 
 		case tcell.KeyCtrlE:
 			if page := editsecret.Create(filteredSecrets[*selectedListItem]); page == nil {
-				widgets.ModalError("Generic error")
+				widgets.ModalAlert("Generic error", nil)
 			} else {
 				inplainsight.InPlainSight.Pages.AddAndSwitchToPage(editsecret.GetName(), page.GetPrimitive(), true)
 			}
 
 		case tcell.KeyCtrlD:
-			widgets.ModalError("Are you sure you want to delete this secret?")
+			widgets.ModalAlert("Are you sure you want to delete this secret?", func() {
+				filteredSecrets[*selectedListItem].MarkDeleatable()
+				err := inplainsight.Conceal(filteredSecrets[*selectedListItem])
+				if err != nil {
+					widgets.ModalAlert("There was an error deleting the secret, please retry", nil)
+					return
+				}
+
+				filteredSecrets = append(filteredSecrets[*selectedListItem:], filteredSecrets[:(*selectedListItem)+1]...)
+				filterResults(resultList, inplainsight.InPlainSight.Secrets)
+			})
 			inplainsight.InPlainSight.App.ForceDraw()
-
-			filteredSecrets[*selectedListItem].Secret = ""
-			filteredSecrets[*selectedListItem].Description = ""
-			filteredSecrets[*selectedListItem].Title = ""
-
-			// ToDo: find a better way to remove any secret
-			err := inplainsight.Conceal(filteredSecrets[*selectedListItem])
-			if err != nil {
-				return nil
-			}
-
-			filteredSecrets = append(filteredSecrets[*selectedListItem:], filteredSecrets[:(*selectedListItem)+1]...)
-			filterResults(resultList, inplainsight.InPlainSight.Secrets)
 
 		default:
 

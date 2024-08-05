@@ -11,10 +11,15 @@ type Secret struct {
 	Description string
 	Secret      string
 
-	Container *SecretsContainer
+	Container  *SecretsContainer
+	deleatable bool
 }
 
 func (s *Secret) Serialize() string {
+	if s.deleatable {
+		return ""
+	}
+
 	return s.Title + secretSeparator + s.Description + secretSeparator + s.Secret
 }
 
@@ -33,4 +38,8 @@ func UnserializeSecret(serialized string) *Secret {
 		log.Printf("Cannot unserialize serialized secret %#v\n", serialized)
 		return nil
 	}
+}
+
+func (s *Secret) MarkDeleatable() {
+	s.deleatable = true
 }
