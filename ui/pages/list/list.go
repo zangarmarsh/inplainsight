@@ -256,6 +256,9 @@ func (r pageFactory) Create() pages.PageInterface {
 			}
 
 		case tcell.KeyCtrlD:
+			queryInput.Blur()
+			resultList.Blur()
+
 			widgets.ModalAlert("Are you sure you want to delete this secret?", func() {
 				filteredSecrets[*selectedListItem].MarkDeleatable()
 				err := inplainsight.Conceal(filteredSecrets[*selectedListItem])
