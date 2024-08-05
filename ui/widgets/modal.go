@@ -31,7 +31,6 @@ func ModalAlert(text string, callback func()) tview.Primitive {
 
 	modalError.
 		SetText(text).
-		SetFocus(0).
 		SetBackgroundColor(tcell.ColorRed).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == okButtonTxt && callback != nil {
@@ -40,6 +39,7 @@ func ModalAlert(text string, callback func()) tview.Primitive {
 			inplainsight.InPlainSight.Pages.RemovePage(pageName)
 		})
 
+	inplainsight.InPlainSight.App.SetFocus(modalError)
 	inplainsight.InPlainSight.Pages.AddAndSwitchToPage(pageName, modalError, true)
 
 	return modalError

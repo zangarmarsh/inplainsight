@@ -141,15 +141,20 @@ func (r pageFactory) Create() pages.PageInterface {
 	})
 
 	queryInput.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyDown {
+		// if queryInput.HasFocus() {
+		log.Println("queryinput has focus")
+		if event.Key() == tcell.KeyDown {
 			queryInput.Blur()
 			resultList.Focus(nil)
 		}
+		// }
 
 		return event
 	})
 
 	resultList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		// if resultList.HasFocus() {
+		log.Println("resultList has focus")
 		if event.Key() == tcell.KeyBacktab {
 			resultList.Blur()
 			queryInput.Focus(nil)
@@ -158,12 +163,14 @@ func (r pageFactory) Create() pages.PageInterface {
 		if event.Key() == tcell.KeyBS || event.Key() == tcell.KeyBackspace2 || (event.Rune() > '\x20' && event.Rune() < '\x7f') {
 			logBox.AddLine("Searching for the given key...", logging.Info)
 			logBox.AddSeparator()
+			inplainsight.InPlainSight.App.SetFocus(queryInput)
 			resultList.Blur()
 
 			(queryInput.InputHandler())(event, nil)
 
 			return nil
 		}
+		// }
 
 		return event
 	})
@@ -226,17 +233,25 @@ func (r pageFactory) Create() pages.PageInterface {
 		switch event.Key() {
 		case tcell.KeyCtrlN:
 			log.Println("Detected ctrl + n")
-
 			if page := newsecret.Create(); page == nil {
 				widgets.ModalAlert("Generic error", nil)
 			} else {
+				queryInput.Blur()
+				resultList.Blur()
+				inplainsight.InPlainSight.App.SetFocus(page.GetPrimitive())
 				inplainsight.InPlainSight.Pages.AddAndSwitchToPage(newsecret.GetName(), page.GetPrimitive(), true)
 			}
 
 		case tcell.KeyCtrlE:
+			queryInput.Blur()
+			resultList.Blur()
+
 			if page := editsecret.Create(filteredSecrets[*selectedListItem]); page == nil {
 				widgets.ModalAlert("Generic error", nil)
 			} else {
+				queryInput.Blur()
+				resultList.Blur()
+				inplainsight.InPlainSight.App.SetFocus(page.GetPrimitive())
 				inplainsight.InPlainSight.Pages.AddAndSwitchToPage(editsecret.GetName(), page.GetPrimitive(), true)
 			}
 

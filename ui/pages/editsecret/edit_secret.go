@@ -81,6 +81,7 @@ func Create(secret *inplainsight.Secret) *pages.GridPage {
 	grid.SetBorderPadding(2, 0, 0, 0)
 
 	page.SetPrimitive(grid)
+	inplainsight.InPlainSight.App.SetFocus(form.GetFormItem(0))
 
 	return &page
 }
