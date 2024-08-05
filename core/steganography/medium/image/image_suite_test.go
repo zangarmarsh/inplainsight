@@ -11,14 +11,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const blankSampleFile = "test/samples/test.jpg"
+const blankSampleFile = "/tmp/test.jpg"
 
 // Parameter `size` must have this structure: [width]x[height]
 func generateBlankImage(size string) error {
-	if err := exec.Command("rm", "rm", blankSampleFile).Run(); err != nil {
-		return err
-	}
-
 	command := exec.Command(
 		"convert",
 		"convert",
@@ -51,6 +47,8 @@ func TestSteganography(t *testing.T) {
 }
 
 var _ = Describe("Concealing/Revealing", func() {
+	defer GinkgoRecover()
+
 	Context("When using a non existant image", func() {
 		secret := steganography.New("/invalid/path/file")
 		It("Should stops gracefully", func() {
@@ -60,6 +58,8 @@ var _ = Describe("Concealing/Revealing", func() {
 
 	Context("When a valid png image is concealed", func() {
 		generateBlankImage("100x100")
+		// Expect(err).Should(BeNil())
+
 		text := "私は inplainsight です!!"
 
 		It("Stops since there's no text to conceal", func() {
