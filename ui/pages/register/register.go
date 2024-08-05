@@ -49,7 +49,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			files, err := os.ReadDir(path)
 			if err != nil {
 				log.Println(err)
-				widgets.ModalError(err.Error())
+				widgets.ModalAlert(err.Error(), nil)
 				inplainsight.InPlainSight.App.ForceDraw()
 				return
 			}
