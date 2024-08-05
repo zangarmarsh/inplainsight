@@ -11,14 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const blankSampleFile = "test/samples/hummingbird.jpg"
-
-// //go:embed ../../test/texts/short.txt
-// var shortText []byte // can be handled with a compression of one
-// //go:embed samples/texts/normal.txt
-// var normalText []byte // 3 bits of compression required
-// //go:embed samples/texts/big.txt
-// var bigText []byte // can't be compressed in the input image
+const blankSampleFile = "test/samples/test.jpg"
 
 // Parameter `size` must have this structure: [width]x[height]
 func generateBlankImage(size string) error {
@@ -66,7 +59,7 @@ var _ = Describe("Concealing/Revealing", func() {
 	})
 
 	Context("When a valid png image is concealed", func() {
-		// generateBlankImage("20x20")
+		generateBlankImage("100x100")
 		text := "私は inplainsight です!!"
 
 		It("Stops since there's no text to conceal", func() {
