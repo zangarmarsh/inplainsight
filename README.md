@@ -6,15 +6,65 @@ This is a platform-independent **password (secret?)** manager which hides your s
 the reliability and safety of your data.
 
 ## How does it work
+### Encryption
 Given an arbitrary master password _inplainsight_ derives two 32 bytes length keys through a slow hashing algorithm. They will encrypt the header and the data through AES-256 CTR. An HMAC is appended to the ciphertexts, to ensure the integrity of the encrypted secrets while decrypting.
 
-The ciphertext is then interwoven within the pixels of an image through a process of adaptive steganography.
+### Steganography
+The ciphertext is then interwoven within any supported media file through a process of adaptive steganography.
 
+### Storage
+Media file(s) might be stored locally or remotely, depending on the source of data used while logging in.
+It would be advisable to keep a couple of remote backups, just to ensure a good level of data redundancy.
 
-The media file might be stored locally, but we advise to keep a couple of online backups, just to ensure a good level of data redundancy.
+## Secrets
+### How to implement your own secret structure
 
-## How does it work from a user perspective
-You only need to remember a master password to get access to your secrets.
+### Supported secret structures
+| ID   | Type     |Fields|
+|------|----------|------|
+ | 0x01 | `Secret` |Title, Description, Secret|
+
+## Media formats
+### How to implement a new media format
+Media formats live under the folder `core/steganography/medium/` and each one must have its own folder and dedicated tests.
+
+Structs implementing `steganography.HostInterface` and registered can be used as media format.
+This is how you register a new media format:
+
+```go
+// core/steganography/medium/yourmediaformat/register.go
+
+package image
+
+import (
+	"github.com/zangarmarsh/inplainsight/core/steganography"
+)
+
+func init() {
+
+  // Extend `Media` collection with a callback that returns an  instance
+  // of `steganography.HostInterface` if the given `filePath` can be
+  // handled by this `Media`. The check is typically based on specific conditions,
+  // such as mimetype or content extension. Otherwise, return `nil`.
+	
+  steganography.Media = append(
+    steganography.Media,
+    func(filePath string) steganography.HostInterface {
+      // ...
+      
+      return nil
+    },
+  )
+}
+```
+
+### Supported media formats
+- `images/*` - will eventually output `image/png` binary data 
+- [ ... ]
+
+## Supported sources & protocols
+- file://
+- [ ... ]
 
 ## Roadmap
 - ~~Complete refactoring~~
