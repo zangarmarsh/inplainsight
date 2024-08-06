@@ -48,12 +48,16 @@ func (r pageFactory) Create() pages.PageInterface {
 				log.Println("saving user preference")
 
 				cfg.PoolPath = path
-				err := cfg.Save()
-				if err != nil {
-					// Todo Handle it with an alert modal
-					log.Fatalln(err)
-					return
-				}
+			} else {
+				log.Println("resetting user preferences")
+				cfg.PoolPath = ""
+			}
+
+			err := cfg.Save()
+			if err != nil {
+				// Todo Handle it with an alert modal
+				log.Fatalln(err)
+				return
 			}
 
 			if path[0] == '~' {
