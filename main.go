@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/ui"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
@@ -35,8 +34,6 @@ func setLoggingLevel() {
 
 	flag.BoolVar(&verbosity, "v", false, "allow verbosity")
 	flag.Parse()
-
-	fmt.Println(verbosity)
 
 	if !verbosity {
 		log.SetOutput(io.Discard)
