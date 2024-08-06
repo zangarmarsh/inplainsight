@@ -114,7 +114,7 @@ func (r pageFactory) Create() pages.PageInterface {
 	resultBox.SetTitle("Results")
 
 	listOfShortcuts := []string{
-		"[orange:italic][ENTER][-] Clipboard",
+		"[orange:italic][^Space][-] Action",
 		"[orange:italic][^N][-] New",
 		"[orange:italic][^D][-] Delete",
 		"[orange:italic][^E][-] Edit",
@@ -125,7 +125,7 @@ func (r pageFactory) Create() pages.PageInterface {
 	shortcuts.SetDynamicColors(true)
 	shortcuts.SetTextAlign(tview.AlignCenter)
 	shortcuts.SetText(strings.Join(listOfShortcuts, " "))
-	resultBox.AddItem(shortcuts, 1, 0, false)
+	resultBox.AddItem(shortcuts, 1, 1, false)
 
 	// Query box
 	queryBox := tview.NewGrid()
