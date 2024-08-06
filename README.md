@@ -76,6 +76,10 @@ func init() {
   - Give the user the ability to choose which file will be used (default will be `random`)
   - Exclusive host for one secret
   - `stealth mode` file header encryption
+- Optional user preferences persistance
+  - Pool path at login
+  - Logout on screen lock
+  - Session timeout while inactive
 - Blank image generation
 - Support new data sources
   - `HTTPS`
