@@ -141,19 +141,15 @@ func (r pageFactory) Create() pages.PageInterface {
 	})
 
 	queryInput.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		// if queryInput.HasFocus() {
-		log.Println("queryinput has focus")
 		if event.Key() == tcell.KeyDown {
 			queryInput.Blur()
 			resultList.Focus(nil)
 		}
-		// }
 
 		return event
 	})
 
 	resultList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		// if resultList.HasFocus() {
 		log.Println("resultList has focus")
 		if event.Key() == tcell.KeyBacktab {
 			resultList.Blur()
@@ -170,7 +166,6 @@ func (r pageFactory) Create() pages.PageInterface {
 
 			return nil
 		}
-		// }
 
 		return event
 	})
