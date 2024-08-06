@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
+	"github.com/zangarmarsh/inplainsight/core/utility/config"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"github.com/zangarmarsh/inplainsight/ui/widgets"
 	"log"
@@ -30,14 +31,30 @@ func (r pageFactory) Create() pages.PageInterface {
 	form.
 		SetBorder(false)
 
+	cfg, err := config.Load()
+	log.Println("found user config", cfg, err)
+
 	// ToDo remove default values and autosave pool path on user choice
 	form.
-		AddPasswordField("Master Password", "password", 0, '*', nil).
-		AddInputField("Pool path", "~/Pictures/passwords/", 0, nil, nil).
+		AddPasswordField("Master Password", "", 0, '*', nil).
+		AddInputField("Pool path", cfg.PoolPath, 0, nil, nil).
+		AddCheckbox("Remember path", cfg.PoolPath != "", nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Register", func() {
 			password := form.GetFormItemByLabel("Master Password").(*tview.InputField).GetText()
 			path := form.GetFormItemByLabel("Pool path").(*tview.InputField).GetText()
+
+			if form.GetFormItemByLabel("Remember path").(*tview.Checkbox).IsChecked() {
+				log.Println("saving user preference")
+
+				cfg.PoolPath = path
+				err := cfg.Save()
+				if err != nil {
+					// Todo Handle it with an alert modal
+					log.Fatalln(err)
+					return
+				}
+			}
 
 			if path[0] == '~' {
 				homeDir, err := os.UserHomeDir()
@@ -81,7 +98,7 @@ func (r pageFactory) Create() pages.PageInterface {
 		SetBorder(true)
 
 	flex.SetDirection(tview.FlexRow)
-	flex.SetBorderPadding(2, 2, 2, 2)
+	flex.SetBorderPadding(1, 1, 2, 2)
 
 	text := tview.NewTextView().
 		SetText(
@@ -92,7 +109,7 @@ func (r pageFactory) Create() pages.PageInterface {
 		SetDynamicColors(true)
 
 	flex.AddItem(text, 0, 2, false)
-	flex.AddItem(form, 0, 1, true)
+	flex.AddItem(form, 0, 2, true)
 
 	grid.
 		AddItem(flex, 0, 1, 1, 1, 30, 50, true).
