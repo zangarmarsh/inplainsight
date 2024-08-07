@@ -8,10 +8,14 @@ type EventType uint8
 
 const (
 	AppInit EventType = iota
-	DiscoveredNewSecret
-	AddedNewSecret
-	UpdatedSecret
-	// Todo implement ChangedUserPreference
+	AppLogout
+
+	SecretDiscovered
+	SecretAdded
+	SecretUpdated
+
+	UserPreferenceInit
+	UserPreferenceChanged
 )
 
 type Event struct {

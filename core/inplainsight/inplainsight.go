@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zangarmarsh/inplainsight/core/cryptography"
+	"github.com/zangarmarsh/inplainsight/core/events"
 	"github.com/zangarmarsh/inplainsight/core/steganography"
-	"github.com/zangarmarsh/inplainsight/ui/events"
 	"log"
 	"strings"
 	"time"
@@ -78,7 +78,7 @@ func Conceal(secret *Secret) error {
 
 			InPlainSight.Trigger(events.Event{
 				CreatedAt: time.Now(),
-				EventType: events.AddedNewSecret,
+				EventType: events.SecretAdded,
 				Data: map[string]interface{}{
 					"secret": secret,
 				},
@@ -86,7 +86,7 @@ func Conceal(secret *Secret) error {
 		} else {
 			InPlainSight.Trigger(events.Event{
 				CreatedAt: time.Now(),
-				EventType: events.UpdatedSecret,
+				EventType: events.SecretUpdated,
 				Data: map[string]interface{}{
 					"secret": secret,
 				},
@@ -141,7 +141,7 @@ func Reveal(fileName string) error {
 
 				InPlainSight.Trigger(events.Event{
 					CreatedAt: time.Now(),
-					EventType: events.DiscoveredNewSecret,
+					EventType: events.SecretDiscovered,
 					Data: map[string]interface{}{
 						"secret": secret,
 					},
