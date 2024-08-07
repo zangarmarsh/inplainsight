@@ -33,3 +33,7 @@ func (p *HostsPool) Random(requiredSpace int) *SecretsContainer {
 
 	return eligibles[rand.Intn(len(eligibles))]
 }
+
+func (p *HostsPool) Reset() {
+	p.pool = nil
+}

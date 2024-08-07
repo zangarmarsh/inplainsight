@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	_ "github.com/zangarmarsh/inplainsight/core/events/effects"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/ui"
 	"github.com/zangarmarsh/inplainsight/ui/pages"

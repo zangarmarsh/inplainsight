@@ -2,19 +2,20 @@ package list
 
 import (
 	"fmt"
-	"github.com/zangarmarsh/inplainsight/core/inplainsight"
-	"github.com/zangarmarsh/inplainsight/ui/pages/newsecret"
-	"log"
-	"strings"
-
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/zangarmarsh/inplainsight/ui/events"
+	"github.com/zangarmarsh/inplainsight/core/events"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"github.com/zangarmarsh/inplainsight/ui/pages/editsecret"
+	"github.com/zangarmarsh/inplainsight/ui/pages/newsecret"
 	"github.com/zangarmarsh/inplainsight/ui/services/logging"
 	"github.com/zangarmarsh/inplainsight/ui/widgets"
 	"golang.design/x/clipboard"
+	"log"
+	"strconv"
+	"strings"
+	"time"
 )
 
 type Page struct {
@@ -89,11 +90,14 @@ func (r pageFactory) Create() pages.PageInterface {
 
 	container.SetDirection(tview.FlexRow)
 
+	footer := tview.NewFlex()
+
 	// Log box
 	{
 		primitive := tview.NewTextView()
 		primitive.
 			SetTitle("Logs").
+			SetTitleAlign(tview.AlignLeft).
 			SetBorder(true)
 		primitive.SetDynamicColors(true)
 		primitive.SetBorderPadding(0, 0, 2, 2)
@@ -102,6 +106,61 @@ func (r pageFactory) Create() pages.PageInterface {
 		logBox.AddLine("Starting up...", logging.Info)
 		logBox.AddLine("Scanning directory...", logging.Info)
 		logBox.AddSeparator()
+
+		footer.AddItem(primitive, 0, 1, true)
+	}
+
+	// User preferences form box
+	{
+		userPreferenceForm := tview.NewForm()
+
+		userPreferenceForm.
+			SetBorder(true).
+			SetBorderPadding(0, 0, 2, 2).
+			SetTitleAlign(tview.AlignRight).
+			SetTitle("Preferences")
+
+		inplainsight.InPlainSight.AddEventsListener([]events.EventType{events.AppInit}, func(event events.Event) {
+			userPreferenceForm.
+				AddInputField("AFK Timeout (seconds)", strconv.Itoa(inplainsight.InPlainSight.UserPreferences.AFKTimeout), 5, nil, func(text string) {
+					// Todo implement countdown using https://pkg.go.dev/github.com/rivo/tview#Application.SetInputCapture and https://pkg.go.dev/github.com/rivo/tview#Application.SetMouseCapture
+					var err error
+					inplainsight.InPlainSight.UserPreferences.AFKTimeout, err = strconv.Atoi(text)
+					if err != nil {
+						logBox.AddLine("There was an error saving AFK Timeout", logging.Warning)
+					} else {
+						err = inplainsight.InPlainSight.UserPreferences.Save()
+						if err != nil {
+							logBox.AddLine("There was an error saving AFK Timeout", logging.Warning)
+						}
+					}
+				})
+
+			userPreferenceForm.
+				AddCheckbox("Log out on screen lock", inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock, func(checked bool) {
+					var err error
+					inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock = checked
+
+					err = inplainsight.InPlainSight.UserPreferences.Save()
+					if err != nil {
+						logBox.AddLine("There was an error saving Logout on screen lock", logging.Warning)
+					} else {
+						inplainsight.InPlainSight.Trigger(events.Event{
+							CreatedAt: time.Now(),
+							EventType: events.UserPreferenceChanged,
+							Data: map[string]interface{}{
+								"pointer": &inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock,
+							},
+						})
+					}
+				})
+		})
+
+		inplainsight.InPlainSight.AddEventsListener([]events.EventType{events.AppLogout}, func(event events.Event) {
+			userPreferenceForm.Clear(true)
+		})
+
+		footer.AddItem(userPreferenceForm, 50, 1, true)
 	}
 
 	// Results
@@ -113,19 +172,35 @@ func (r pageFactory) Create() pages.PageInterface {
 	resultBox.AddItem(resultList, 0, 1, false)
 	resultBox.SetTitle("Results")
 
-	listOfShortcuts := []string{
-		"[orange:italic][^Space][-] Action",
-		"[orange:italic][^N][-] New",
-		"[orange:italic][^D][-] Delete",
-		"[orange:italic][^E][-] Edit",
-		"[orange:italic][^C][-] Quit",
+	// Shortcuts
+	{
+		listOfShortcuts := []string{
+			"[orange:italic][ Space ][-] Action",
+			"[orange:italic][ ^N ][-] New",
+			"[orange:italic][ ^D ][-] Delete",
+			"[orange:italic][ ^E ][-] Edit",
+			"[orange:italic][ ^C ][-] Quit",
+		}
+
+		shortcuts := tview.NewTextView()
+		shortcuts.SetDynamicColors(true)
+		shortcuts.SetTextAlign(tview.AlignCenter)
+		shortcuts.SetText(strings.Join(listOfShortcuts, " "))
+		resultBox.AddItem(shortcuts, 1, 1, false)
 	}
 
-	shortcuts := tview.NewTextView()
-	shortcuts.SetDynamicColors(true)
-	shortcuts.SetTextAlign(tview.AlignCenter)
-	shortcuts.SetText(strings.Join(listOfShortcuts, " "))
-	resultBox.AddItem(shortcuts, 1, 1, false)
+	// Currently open source label
+	{
+		sourceOfDataLabel := tview.NewTextView().
+			SetDynamicColors(true).
+			SetTextAlign(tview.AlignRight)
+
+		resultBox.AddItem(sourceOfDataLabel, 1, 1, false)
+
+		inplainsight.InPlainSight.AddEventsListener([]events.EventType{events.AppInit}, func(event events.Event) {
+			sourceOfDataLabel.SetText(inplainsight.InPlainSight.Path)
+		})
+	}
 
 	// Query box
 	queryBox := tview.NewGrid()
@@ -173,7 +248,7 @@ func (r pageFactory) Create() pages.PageInterface {
 	container.
 		AddItem(queryBox, 4, 0, true).
 		AddItem(resultBox, 0, 1, false).
-		AddItem(logBox.GetPrimitive(), 11, 0, false)
+		AddItem(footer, 11, 0, false)
 
 	copyright := tview.NewTextView()
 	copyright.SetDynamicColors(true)
@@ -184,7 +259,7 @@ func (r pageFactory) Create() pages.PageInterface {
 	page.SetPrimitive(container)
 
 	inplainsight.InPlainSight.AddEventsListener(
-		[]events.EventType{events.DiscoveredNewSecret},
+		[]events.EventType{events.SecretDiscovered},
 		func(event events.Event) {
 			resultList.AddItem(
 				event.Data["secret"].(*inplainsight.Secret).Title,
@@ -206,7 +281,7 @@ func (r pageFactory) Create() pages.PageInterface {
 		})
 
 	inplainsight.InPlainSight.AddEventsListener(
-		[]events.EventType{events.UpdatedSecret},
+		[]events.EventType{events.SecretUpdated},
 		func(event events.Event) {
 			log.Println("event", event)
 
@@ -216,7 +291,7 @@ func (r pageFactory) Create() pages.PageInterface {
 	)
 
 	inplainsight.InPlainSight.AddEventsListener(
-		[]events.EventType{events.AddedNewSecret},
+		[]events.EventType{events.SecretAdded},
 		func(event events.Event) {
 			resultList.AddItem(event.Data["secret"].(*inplainsight.Secret).Secret, event.Data["secret"].(*inplainsight.Secret).Description, 0, nil)
 			filterResults(resultList, inplainsight.InPlainSight.Secrets)

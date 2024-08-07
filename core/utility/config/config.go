@@ -11,7 +11,9 @@ const dirName = ".inplainsight"
 const fileName = "config.json"
 
 type Config struct {
-	PoolPath string `json:"pool_path"`
+	PoolPath           string `json:"pool_path"`
+	AFKTimeout         int    `json:"afk_timeout"`
+	LogoutOnScreenLock bool
 }
 
 func (c *Config) Save() error {

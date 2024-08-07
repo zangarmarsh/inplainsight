@@ -3,6 +3,7 @@ package register
 import (
 	"fmt"
 	"github.com/rivo/tview"
+	"github.com/zangarmarsh/inplainsight/core/events"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/core/utility/config"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 type Page struct {
@@ -32,13 +34,19 @@ func (r pageFactory) Create() pages.PageInterface {
 		SetBorder(false)
 
 	cfg, err := config.Load()
-	log.Println("found user config", cfg, err)
+	log.Println("found user config", inplainsight.InPlainSight.UserPreferences, err)
 
-	// ToDo remove default values and autosave pool path on user choice
+	inplainsight.InPlainSight.UserPreferences = cfg
+	inplainsight.InPlainSight.Trigger(events.Event{
+		CreatedAt: time.Now(),
+		EventType: events.UserPreferenceInit,
+		Data:      map[string]interface{}{},
+	})
+
 	form.
 		AddPasswordField("Master Password", "", 0, '*', nil).
-		AddInputField("Pool path", cfg.PoolPath, 0, nil, nil).
-		AddCheckbox("Remember path", cfg.PoolPath != "", nil).
+		AddInputField("Pool path", inplainsight.InPlainSight.UserPreferences.PoolPath, 0, nil, nil).
+		AddCheckbox("Remember path", inplainsight.InPlainSight.UserPreferences.PoolPath != "", nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Register", func() {
 			password := form.GetFormItemByLabel("Master Password").(*tview.InputField).GetText()
@@ -83,6 +91,10 @@ func (r pageFactory) Create() pages.PageInterface {
 			inplainsight.InPlainSight.MasterPassword = password
 
 			inplainsight.InPlainSight.Pages.RemovePage(r.GetName())
+			inplainsight.InPlainSight.Trigger(events.Event{
+				CreatedAt: time.Now(),
+				EventType: events.AppInit,
+			})
 			err = pages.Navigate("list")
 
 			for _, file := range files {
