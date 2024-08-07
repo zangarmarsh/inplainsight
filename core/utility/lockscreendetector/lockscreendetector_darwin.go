@@ -1,5 +1,12 @@
 package lockscreendetector
 
+import (
+	"context"
+	"os/exec"
+	"strings"
+	"time"
+)
+
 func isScreenLocked() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
