@@ -17,20 +17,20 @@ func init() {
 		// Toggle screen lock watcher
 		{
 			if event.EventType == events.AppInit || (event.Data["pointer"] != nil && event.Data["pointer"] == &inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock) {
-				if stopCaringAboutLockScreen == nil {
-					stopCaringAboutLockScreen = make(chan bool)
-				}
-
 				if inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock {
-					go func() {
+					go func(c *chan bool) {
+						if stopCaringAboutLockScreen == nil {
+							stopCaringAboutLockScreen = make(chan bool)
+						}
+
 						locked := lockscreendetector.Analyze(&stopCaringAboutLockScreen)
 
 						if <-*locked {
 							log.Println("The screen have been locked, logging out...")
 							inplainsight.InPlainSight.Logout()
 						}
-					}()
-				} else {
+					}(&stopCaringAboutLockScreen)
+				} else if stopCaringAboutLockScreen != nil {
 					stopCaringAboutLockScreen <- true
 				}
 			}
