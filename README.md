@@ -77,9 +77,10 @@ func init() {
   - Exclusive host for one secret
   - `stealth mode` file header encryption
 - Optional user preferences persistance
-  - Pool path at login
-  - Logout on screen lock
+  - ~~Pool path at login~~
+  - ~~Logout on screen lock~~
   - Session timeout while inactive
+  - `haveibeenpwned` optional periodical checks
 - Blank image generation
 - Support new data sources
   - `HTTPS`
@@ -95,5 +96,4 @@ func init() {
 - Steganography the following media formats:
     - Audio files `MP3/WAV`
     - `MP4`
-- Implement `haveibeenpwned` optional periodical checks
 - Browser extension
