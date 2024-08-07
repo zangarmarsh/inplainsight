@@ -67,6 +67,17 @@ func Navigate(path string) error {
 	history = append(history, path)
 
 	if PageFactories[path] != nil {
+		if !inplainsight.InPlainSight.Pages.HasPage(path) {
+			page := PageFactories[path].Create()
+
+			inplainsight.InPlainSight.Pages.AddPage(
+				page.GetName(),
+				page.GetPrimitive(),
+				true,
+				false,
+			)
+		}
+
 		inplainsight.InPlainSight.Pages.SwitchToPage(path)
 		return nil
 	}
