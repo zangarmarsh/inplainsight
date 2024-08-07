@@ -7,13 +7,15 @@ import (
 type EventType uint8
 
 const (
-	DiscoveredNewSecret EventType = iota
+	AppInit EventType = iota
+	DiscoveredNewSecret
 	AddedNewSecret
 	UpdatedSecret
+	// Todo implement ChangedUserPreference
 )
 
 type Event struct {
-	CreatedAt  time.Time
+	CreatedAt time.Time
 	EventType EventType
 	Data      map[string]interface{}
 }
