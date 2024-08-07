@@ -18,12 +18,12 @@ func init() {
 		{
 			if event.EventType == events.AppInit || (event.Data["pointer"] != nil && event.Data["pointer"] == &inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock) {
 				if inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock {
-					go func(c *chan bool) {
-						if stopCaringAboutLockScreen == nil {
-							stopCaringAboutLockScreen = make(chan bool)
+					go func(ch *chan bool) {
+						if ch == nil {
+							*ch = make(chan bool)
 						}
 
-						locked := lockscreendetector.Analyze(&stopCaringAboutLockScreen)
+						locked := lockscreendetector.Analyze(ch)
 
 						if <-*locked {
 							log.Println("The screen have been locked, logging out...")
