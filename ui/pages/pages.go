@@ -45,18 +45,6 @@ func (gp *GridPage) SetName(name string) {
 }
 
 func Init() {
-	log.Print(PageFactories)
-	for _, pageFactory := range PageFactories {
-		page := pageFactory.Create()
-
-		inplainsight.InPlainSight.Pages.AddPage(
-			page.GetName(),
-			page.GetPrimitive(),
-			true,
-			false,
-		)
-	}
-
 	err := Navigate("register")
 	if err != nil {
 		log.Println(err)
