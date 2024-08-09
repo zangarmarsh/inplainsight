@@ -33,6 +33,8 @@ var filteredSecrets []*inplainsight.Secret
 var selectedListItem *int
 var searchQuery string
 
+var createdNTimes = 0
+
 func (r pageFactory) Create() pages.PageInterface {
 	// Todo find a smarter way to filter the results
 	var filterResults = func(resultList *tview.List, secrets []*inplainsight.Secret) {
@@ -120,28 +122,53 @@ func (r pageFactory) Create() pages.PageInterface {
 			SetTitleAlign(tview.AlignRight).
 			SetTitle("Preferences")
 
-		inplainsight.InPlainSight.AddEventsListener([]events.EventType{events.AppInit}, func(event events.Event) {
-			userPreferenceForm.
-				AddInputField("AFK Timeout (seconds)", strconv.Itoa(inplainsight.InPlainSight.UserPreferences.AFKTimeout), 5, nil, func(text string) {
-					// Todo implement countdown using https://pkg.go.dev/github.com/rivo/tview#Application.SetInputCapture and https://pkg.go.dev/github.com/rivo/tview#Application.SetMouseCapture
-					var err error
-					inplainsight.InPlainSight.UserPreferences.AFKTimeout, err = strconv.Atoi(text)
-					if err != nil {
-						logBox.AddLine("There was an error saving AFK Timeout", logging.Warning)
-					} else {
-						err = inplainsight.InPlainSight.UserPreferences.Save()
+		// AFK Timeout preference management
+		var afkTimeoutInput *tview.InputField
+		{
+			afkTimeoutInput = tview.NewInputField()
+			afkTimeoutInput.
+				SetLabel("AFK Timeout (minutes)").
+				SetAcceptanceFunc(func(textToCheck string, lastChar rune) bool {
+					return lastChar >= '0' && lastChar <= '9'
+				}).
+				SetBlurFunc(func() {
+					inputValue := afkTimeoutInput.GetText()
+					if inputValue != "" {
+						inputValue, err := strconv.Atoi(inputValue)
+
 						if err != nil {
 							logBox.AddLine("There was an error saving AFK Timeout", logging.Warning)
+						} else {
+							inplainsight.InPlainSight.UserPreferences.AFKTimeout = inputValue
+							err = inplainsight.InPlainSight.UserPreferences.Save()
+							if err != nil {
+								logBox.AddLine("There was an error saving AFK Timeout", logging.Warning)
+							} else {
+								inplainsight.InPlainSight.Trigger(events.Event{
+									CreatedAt: time.Now(),
+									EventType: events.UserPreferenceChanged,
+									Data: map[string]interface{}{
+										"pointer": &inplainsight.InPlainSight.UserPreferences.AFKTimeout,
+									},
+								})
+							}
 						}
 					}
 				})
 
-			userPreferenceForm.
-				AddCheckbox("Log out on screen lock", inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock, func(checked bool) {
-					var err error
-					inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock = checked
+			userPreferenceForm.AddFormItem(afkTimeoutInput)
+		}
 
-					err = inplainsight.InPlainSight.UserPreferences.Save()
+		// Logout on screen lock user preference management
+		var logoutOnScreenLockCheckbox *tview.Checkbox
+		{
+			logoutOnScreenLockCheckbox = tview.NewCheckbox()
+			logoutOnScreenLockCheckbox.
+				SetLabel("Logout on screen lock").
+				SetChangedFunc(func(checked bool) {
+					inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock = checked
+					err := inplainsight.InPlainSight.UserPreferences.Save()
+
 					if err != nil {
 						logBox.AddLine("There was an error saving Logout on screen lock", logging.Warning)
 					} else {
@@ -154,11 +181,16 @@ func (r pageFactory) Create() pages.PageInterface {
 						})
 					}
 				})
-		})
 
-		inplainsight.InPlainSight.AddEventsListener([]events.EventType{events.AppLogout}, func(event events.Event) {
-			userPreferenceForm.Clear(true)
-		})
+			userPreferenceForm.AddFormItem(logoutOnScreenLockCheckbox)
+		}
+
+		// This delayed initialization might prevent casual null pointer deference which would occur if the current page is
+		// rendered before the user login event
+		if inplainsight.InPlainSight.UserPreferences != nil {
+			afkTimeoutInput.SetText(strconv.Itoa(inplainsight.InPlainSight.UserPreferences.AFKTimeout))
+			logoutOnScreenLockCheckbox.SetChecked(inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock)
+		}
 
 		footer.AddItem(userPreferenceForm, 50, 1, true)
 	}
@@ -283,8 +315,6 @@ func (r pageFactory) Create() pages.PageInterface {
 	inplainsight.InPlainSight.AddEventsListener(
 		[]events.EventType{events.SecretUpdated},
 		func(event events.Event) {
-			log.Println("event", event)
-
 			filterResults(resultList, inplainsight.InPlainSight.Secrets)
 			inplainsight.InPlainSight.App.ForceDraw()
 		},
@@ -298,6 +328,14 @@ func (r pageFactory) Create() pages.PageInterface {
 			logBox.AddLine("Added a new secret", logging.Info)
 			logBox.AddSeparator()
 		})
+
+	inplainsight.InPlainSight.AddEventsListener(
+		[]events.EventType{events.UserPreferenceChanged},
+		func(event events.Event) {
+			logBox.AddLine("User preference changed", logging.Info)
+			logBox.AddSeparator()
+		},
+	)
 
 	container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {

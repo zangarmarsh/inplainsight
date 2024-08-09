@@ -8,7 +8,7 @@ import (
 type LogLevel uint8
 
 const (
-	Info     LogLevel = iota
+	Info LogLevel = iota
 	Warning
 	Critical
 	Debug
@@ -20,7 +20,7 @@ type Log struct {
 }
 
 type LogsBox struct {
-	box *tview.TextView
+	box  *tview.TextView
 	logs []Log
 }
 
@@ -34,28 +34,28 @@ func (l *LogsBox) AddLine(text string, level LogLevel) {
 		text, level,
 	})
 
+	log.Println(text)
+
 	for _, line := range l.logs {
 		var colorPrefix string
 
 		switch line.level {
-			case Warning:
-				colorPrefix = "[orange:i]"
-			case Critical:
-				colorPrefix = "[red:i]"
-			case Debug:
-				colorPrefix = "[white:i]"
-			case Info:
-			default:
-				colorPrefix = "[orange:i]"
+		case Warning:
+			colorPrefix = "[orange:i]"
+		case Critical:
+			colorPrefix = "[red:i]"
+		case Debug:
+			colorPrefix = "[white:i]"
+		case Info:
+		default:
+			colorPrefix = "[orange:i]"
 		}
-
-		log.Println(line)
 
 		joined = joined + colorPrefix + line.text + "[-]\n"
 	}
 
 	l.box.SetText(joined)
-	l.box.SetScrollable(true).ScrollTo(len(l.logs) + 1, 0)
+	l.box.SetScrollable(true).ScrollTo(len(l.logs)+1, 0)
 }
 
 func (l *LogsBox) AddSeparator() {
@@ -66,7 +66,7 @@ func (l *LogsBox) GetLatestLogLevel() LogLevel {
 	ll := Info
 
 	if len(l.logs) > 0 {
-		ll = l.logs[len(l.logs) - 1].level
+		ll = l.logs[len(l.logs)-1].level
 	}
 
 	return ll

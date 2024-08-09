@@ -1,7 +1,6 @@
 package lockscreendetector
 
 import (
-	"log"
 	"time"
 )
 
@@ -14,8 +13,7 @@ func Analyze(killSignal *chan bool) *chan bool {
 			case <-*killSignal:
 				return
 			default:
-				log.Printf("Sleep")
-				time.Sleep(250 * time.Millisecond)
+				time.Sleep(10 * time.Millisecond)
 				if isScreenLocked() {
 					detectorChan <- true
 				}

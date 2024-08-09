@@ -9,6 +9,7 @@ type EventType uint8
 const (
 	AppInit EventType = iota
 	AppLogout
+	UserLoggedIn
 
 	SecretDiscovered
 	SecretAdded

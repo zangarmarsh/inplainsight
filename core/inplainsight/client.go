@@ -30,6 +30,8 @@ func (c *InPlainSightClient) Logout() {
 	c.MasterPassword = ""
 	c.Path = ""
 
+	c.UserPreferences = nil
+
 	c.Trigger(events.Event{
 		CreatedAt: time.Now(),
 		EventType: events.AppLogout,

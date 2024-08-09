@@ -49,6 +49,18 @@ func (r pageFactory) Create() pages.PageInterface {
 		AddCheckbox("Remember path", inplainsight.InPlainSight.UserPreferences.PoolPath != "", nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Register", func() {
+			if inplainsight.InPlainSight.UserPreferences == nil {
+				cfg, err := config.Load()
+				log.Println("found user config", inplainsight.InPlainSight.UserPreferences, err)
+
+				inplainsight.InPlainSight.UserPreferences = cfg
+				inplainsight.InPlainSight.Trigger(events.Event{
+					CreatedAt: time.Now(),
+					EventType: events.UserPreferenceInit,
+					Data:      map[string]interface{}{},
+				})
+			}
+
 			password := form.GetFormItemByLabel("Master Password").(*tview.InputField).GetText()
 			path := form.GetFormItemByLabel("Pool path").(*tview.InputField).GetText()
 
@@ -95,11 +107,14 @@ func (r pageFactory) Create() pages.PageInterface {
 				CreatedAt: time.Now(),
 				EventType: events.AppInit,
 			})
+
 			err = pages.Navigate("list")
 
 			for _, file := range files {
 				go revealSecret(file)
 			}
+
+			inplainsight.InPlainSight.Pages.RemovePage(page.GetName())
 		}).
 		AddButton("Quit (CTRL + C)", func() {
 			inplainsight.InPlainSight.App.Stop()
@@ -128,7 +143,7 @@ func (r pageFactory) Create() pages.PageInterface {
 	flex.AddItem(form, 0, 2, true)
 
 	grid.
-		AddItem(flex, 0, 1, 1, 1, 30, 50, true).
+		AddItem(flex, 0, 1, 1, 1, 33, 50, true).
 		AddItem(flex, 0, 0, 3, 3, 0, 0, true)
 
 	grid.SetBorderPadding(2, 0, 0, 0)
