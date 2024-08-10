@@ -22,7 +22,7 @@ var InPlainSight = &InPlainSightClient{
 	Hosts: *NewHostsPool(),
 }
 
-func Conceal(secret *secrets.SimpleSecret) error {
+func Conceal(secret secrets.SecretInterface) error {
 	isCreating := false
 
 	// ToDo maybe worth creating a isEmpty() method on SimpleSecret
@@ -37,18 +37,18 @@ func Conceal(secret *secrets.SimpleSecret) error {
 	var err error
 
 	// If `secret.Container` is null it will likely mean that we're creating it
-	if secret.Container == nil {
+	if secret.GetContainer() == nil {
 		isCreating = true
 
 		// At this point there should be already a bunch of secret hosts
-		secret.Container = InPlainSight.Hosts.Random(len(secretMessage))
+		secret.SetContainer(InPlainSight.Hosts.Random(len(secretMessage)))
 
-		if secret.Container != nil {
-			secret.Container.Add(secret)
+		if secret.GetContainer() != nil {
+			secret.GetContainer().Add(secret)
 		}
 	}
 
-	if secret.Container != nil {
+	if secret.GetContainer() != nil {
 		if len(InPlainSight.MasterPassword) != 0 {
 			contentEncryptionKey, _, err = cryptography.DeriveEncryptionKeysFromPassword([]byte(InPlainSight.MasterPassword))
 			if err != nil {
@@ -56,8 +56,8 @@ func Conceal(secret *secrets.SimpleSecret) error {
 			}
 
 			log.Printf("SimpleSecret: %+v (%+v)", secret, &secret)
-			log.Printf("Updating container file with secrets: %+v", secret.Container.GetItems())
-			secretMessage = []byte(secret.Container.Serialize())
+			log.Printf("Updating container file with secrets: %+v", secret.GetContainer().GetItems())
+			secretMessage = []byte(secret.GetContainer().Serialize())
 
 			secretMessage, err = cryptography.Encrypt(secretMessage, contentEncryptionKey)
 			if err != nil {
@@ -65,9 +65,9 @@ func Conceal(secret *secrets.SimpleSecret) error {
 			}
 		}
 
-		log.Printf("Media at %v (%d/%d) has been chosen to host secret %+v", secret.Container.Host.GetPath(), secret.Container.Host.Len(), secret.Container.Host.Cap(), secret)
+		log.Printf("Media at %v (%d/%d) has been chosen to host secret %+v", secret.GetContainer().Host.GetPath(), secret.GetContainer().Host.Len(), secret.GetContainer().Host.Cap(), secret)
 
-		err = secret.Container.Host.Interweave(string(secretMessage))
+		err = secret.GetContainer().Host.Interweave(string(secretMessage))
 		if err != nil {
 			return err
 		}
@@ -134,7 +134,7 @@ func Reveal(fileName string) error {
 			container.Unserialize(string(decrypted))
 
 			for _, secret := range container.GetItems() {
-				secret.Container = &container
+				secret.SetContainer(&container)
 				InPlainSight.Secrets = append(InPlainSight.Secrets, secret)
 
 				InPlainSight.Trigger(events.Event{

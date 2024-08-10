@@ -6,61 +6,20 @@ import (
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
-	"log"
 )
 
 func GetName() string {
 	return "edit"
 }
 
-func Create(secret *secrets.SimpleSecret) *pages.GridPage {
+func Create(secret secrets.SecretInterface) *pages.GridPage {
 	page := pages.GridPage{}
 	page.SetName(GetName())
 
-	form := tview.NewForm()
+	form := secret.GetForm(GetName())
 
 	form.
 		SetBorder(false)
-
-	var formTitle string
-	var formDescription string
-	var formSecret string
-
-	if secret != nil {
-		formTitle = secret.Title
-		formDescription = secret.Description
-		formSecret = secret.Secret
-	}
-
-	form.
-		AddInputField("Title", formTitle, 0, nil, nil).
-		AddInputField("Description", formDescription, 0, nil, nil).
-		AddPasswordField("SimpleSecret", formSecret, 0, '*', nil).
-		SetButtonsAlign(tview.AlignCenter).
-		AddButton("Save", func() {
-			formTitle = form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
-			formDescription = form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret = form.GetFormItemByLabel("SimpleSecret").(*tview.InputField).GetText()
-
-			err := pages.Navigate("list")
-
-			(*secret).Title = formTitle
-			(*secret).Description = formDescription
-			(*secret).Secret = formSecret
-
-			err = inplainsight.Conceal(secret)
-
-			if err == nil {
-				log.Println("secret updated", secret)
-			} else {
-				log.Println("error while concealing", err)
-			}
-
-			inplainsight.InPlainSight.Pages.RemovePage(GetName())
-		}).
-		AddButton("Back", func() {
-			inplainsight.InPlainSight.Pages.RemovePage(GetName())
-		})
 
 	grid := tview.NewGrid().
 		SetRows(0, 0).

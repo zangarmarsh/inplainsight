@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
-	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/simple"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
-	"log"
 )
 
 func GetName() string {
@@ -17,49 +16,7 @@ func Create() *pages.GridPage {
 	page := pages.GridPage{}
 	page.SetName(GetName())
 
-	form := tview.NewForm()
-
-	form.
-		SetBorder(false)
-
-	form.
-		AddInputField("Title", "", 0, nil, nil).
-		AddInputField("Description", "", 0, nil, nil).
-		AddPasswordField("SimpleSecret", "", 0, '*', nil).
-		SetButtonsAlign(tview.AlignCenter).
-		AddButton("Save", func() {
-			formTitle := form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
-			formDescription := form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret := form.GetFormItemByLabel("SimpleSecret").(*tview.InputField).GetText()
-
-			err := pages.Navigate("list")
-			if err != nil {
-				// Todo handle it
-				log.Fatal(err)
-			}
-
-			secret := secrets.SimpleSecret{}
-
-			secret.Title = formTitle
-			secret.Description = formDescription
-			secret.Secret = formSecret
-
-			err = inplainsight.Conceal(&secret)
-
-			if err == nil {
-				form.GetFormItemByLabel("Title").(*tview.InputField).SetText("")
-				form.GetFormItemByLabel("Description").(*tview.InputField).SetText("")
-				form.GetFormItemByLabel("SimpleSecret").(*tview.InputField).SetText("")
-				inplainsight.InPlainSight.App.SetFocus(form.GetFormItem(0))
-
-				log.Println("added secret", secret)
-			}
-
-			inplainsight.InPlainSight.Pages.RemovePage(GetName())
-		}).
-		AddButton("Back", func() {
-			inplainsight.InPlainSight.Pages.RemovePage(GetName())
-		})
+	form := (&simple.SimpleSecret{}).GetForm(GetName())
 
 	grid := tview.NewGrid().
 		SetRows(0, 0).

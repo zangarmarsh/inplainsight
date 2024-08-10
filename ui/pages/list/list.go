@@ -30,7 +30,7 @@ func (r pageFactory) GetName() string {
 }
 
 var logBox *logging.LogsBox
-var filteredSecrets []*secrets.SimpleSecret
+var filteredSecrets []secrets.SecretInterface
 var selectedListItem *int
 var searchQuery string
 
@@ -38,7 +38,7 @@ var createdNTimes = 0
 
 func (r pageFactory) Create() pages.PageInterface {
 	// Todo find a smarter way to filter the results
-	var filterResults = func(resultList *tview.List, secrets []*secrets.SimpleSecret) {
+	var filterResults = func(resultList *tview.List, secrets []secrets.SecretInterface) {
 		for path, secret := range secrets {
 			log.Printf("%+v in file %+v\n", secret, path)
 		}
@@ -54,14 +54,14 @@ func (r pageFactory) Create() pages.PageInterface {
 		for index, secret := range secrets {
 			pasteIntoClipboard := func() {
 				log.Println("Copying into clipboard")
-				clipboard.Write(clipboard.FmtText, []byte(filteredSecrets[*selectedListItem].Secret))
-				logBox.AddLine(fmt.Sprintf("Container '%s' copied into clipboard!", filteredSecrets[*selectedListItem].Secret), logging.Info)
+				clipboard.Write(clipboard.FmtText, []byte(filteredSecrets[*selectedListItem].GetSecret()))
+				logBox.AddLine(fmt.Sprintf("Secret '%s' copied into clipboard!", filteredSecrets[*selectedListItem].GetSecret()), logging.Info)
 				logBox.AddSeparator()
 			}
 
 			if len(searchQuery) == 0 ||
-				strings.Contains(strings.ToLower(secret.Title), lowerCaseSearchQuery) ||
-				strings.Contains(strings.ToLower(secret.Description), lowerCaseSearchQuery) {
+				strings.Contains(strings.ToLower(secret.GetTitle()), lowerCaseSearchQuery) ||
+				strings.Contains(strings.ToLower(secret.GetDescription()), lowerCaseSearchQuery) {
 				filteredSecrets = append(
 					filteredSecrets,
 					secret,
@@ -69,8 +69,8 @@ func (r pageFactory) Create() pages.PageInterface {
 
 				resultList.InsertItem(
 					index,
-					secret.Title,
-					secret.Description,
+					secret.GetTitle(),
+					secret.GetDescription(),
 					0,
 					pasteIntoClipboard,
 				)
@@ -295,8 +295,8 @@ func (r pageFactory) Create() pages.PageInterface {
 		[]events.EventType{events.SecretDiscovered},
 		func(event events.Event) {
 			resultList.AddItem(
-				event.Data["secret"].(*secrets.SimpleSecret).Title,
-				event.Data["secret"].(*secrets.SimpleSecret).Description,
+				event.Data["secret"].(secrets.SecretInterface).GetTitle(),
+				event.Data["secret"].(secrets.SecretInterface).GetDescription(),
 				0,
 				nil,
 			)
@@ -304,9 +304,9 @@ func (r pageFactory) Create() pages.PageInterface {
 			filterResults(resultList, inplainsight.InPlainSight.Secrets)
 			inplainsight.InPlainSight.App.ForceDraw()
 
-			logLine := event.Data["secret"].(*secrets.SimpleSecret).Title
-			if event.Data["secret"].(*secrets.SimpleSecret).Description != "" {
-				logLine = logLine + " - " + event.Data["secret"].(*secrets.SimpleSecret).Description
+			logLine := event.Data["secret"].(secrets.SecretInterface).GetTitle()
+			if event.Data["secret"].(secrets.SecretInterface).GetDescription() != "" {
+				logLine = logLine + " - " + event.Data["secret"].(secrets.SecretInterface).GetDescription()
 			}
 
 			logBox.AddLine(fmt.Sprintf("Found secret '%s' in file", logLine), logging.Info)
@@ -324,7 +324,7 @@ func (r pageFactory) Create() pages.PageInterface {
 	inplainsight.InPlainSight.AddEventsListener(
 		[]events.EventType{events.SecretAdded},
 		func(event events.Event) {
-			resultList.AddItem(event.Data["secret"].(*secrets.SimpleSecret).Secret, event.Data["secret"].(*secrets.SimpleSecret).Description, 0, nil)
+			resultList.AddItem(event.Data["secret"].(secrets.SecretInterface).GetSecret(), event.Data["secret"].(secrets.SecretInterface).GetDescription(), 0, nil)
 			filterResults(resultList, inplainsight.InPlainSight.Secrets)
 			logBox.AddLine("Added a new secret", logging.Info)
 			logBox.AddSeparator()

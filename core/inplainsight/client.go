@@ -14,7 +14,7 @@ type InPlainSightClient struct {
 	App   *tview.Application
 	Pages *tview.Pages
 
-	Secrets []*secrets.SimpleSecret
+	Secrets []secrets.SecretInterface
 
 	Hosts HostsPool
 
