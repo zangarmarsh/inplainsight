@@ -6,6 +6,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/events"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"github.com/zangarmarsh/inplainsight/ui/pages/editsecret"
 	"github.com/zangarmarsh/inplainsight/ui/pages/newsecret"
@@ -29,7 +30,7 @@ func (r pageFactory) GetName() string {
 }
 
 var logBox *logging.LogsBox
-var filteredSecrets []*inplainsight.Secret
+var filteredSecrets []*secrets.SimpleSecret
 var selectedListItem *int
 var searchQuery string
 
@@ -37,7 +38,7 @@ var createdNTimes = 0
 
 func (r pageFactory) Create() pages.PageInterface {
 	// Todo find a smarter way to filter the results
-	var filterResults = func(resultList *tview.List, secrets []*inplainsight.Secret) {
+	var filterResults = func(resultList *tview.List, secrets []*secrets.SimpleSecret) {
 		for path, secret := range secrets {
 			log.Printf("%+v in file %+v\n", secret, path)
 		}
@@ -294,8 +295,8 @@ func (r pageFactory) Create() pages.PageInterface {
 		[]events.EventType{events.SecretDiscovered},
 		func(event events.Event) {
 			resultList.AddItem(
-				event.Data["secret"].(*inplainsight.Secret).Title,
-				event.Data["secret"].(*inplainsight.Secret).Description,
+				event.Data["secret"].(*secrets.SimpleSecret).Title,
+				event.Data["secret"].(*secrets.SimpleSecret).Description,
 				0,
 				nil,
 			)
@@ -303,9 +304,9 @@ func (r pageFactory) Create() pages.PageInterface {
 			filterResults(resultList, inplainsight.InPlainSight.Secrets)
 			inplainsight.InPlainSight.App.ForceDraw()
 
-			logLine := event.Data["secret"].(*inplainsight.Secret).Title
-			if event.Data["secret"].(*inplainsight.Secret).Description != "" {
-				logLine = logLine + " - " + event.Data["secret"].(*inplainsight.Secret).Description
+			logLine := event.Data["secret"].(*secrets.SimpleSecret).Title
+			if event.Data["secret"].(*secrets.SimpleSecret).Description != "" {
+				logLine = logLine + " - " + event.Data["secret"].(*secrets.SimpleSecret).Description
 			}
 
 			logBox.AddLine(fmt.Sprintf("Found secret '%s' in file", logLine), logging.Info)
@@ -323,7 +324,7 @@ func (r pageFactory) Create() pages.PageInterface {
 	inplainsight.InPlainSight.AddEventsListener(
 		[]events.EventType{events.SecretAdded},
 		func(event events.Event) {
-			resultList.AddItem(event.Data["secret"].(*inplainsight.Secret).Secret, event.Data["secret"].(*inplainsight.Secret).Description, 0, nil)
+			resultList.AddItem(event.Data["secret"].(*secrets.SimpleSecret).Secret, event.Data["secret"].(*secrets.SimpleSecret).Description, 0, nil)
 			filterResults(resultList, inplainsight.InPlainSight.Secrets)
 			logBox.AddLine("Added a new secret", logging.Info)
 			logBox.AddSeparator()

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"log"
 )
@@ -24,12 +25,12 @@ func Create() *pages.GridPage {
 	form.
 		AddInputField("Title", "", 0, nil, nil).
 		AddInputField("Description", "", 0, nil, nil).
-		AddPasswordField("Secret", "", 0, '*', nil).
+		AddPasswordField("SimpleSecret", "", 0, '*', nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Save", func() {
 			formTitle := form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
 			formDescription := form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret := form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
+			formSecret := form.GetFormItemByLabel("SimpleSecret").(*tview.InputField).GetText()
 
 			err := pages.Navigate("list")
 			if err != nil {
@@ -37,7 +38,7 @@ func Create() *pages.GridPage {
 				log.Fatal(err)
 			}
 
-			secret := inplainsight.Secret{}
+			secret := secrets.SimpleSecret{}
 
 			secret.Title = formTitle
 			secret.Description = formDescription
@@ -48,7 +49,7 @@ func Create() *pages.GridPage {
 			if err == nil {
 				form.GetFormItemByLabel("Title").(*tview.InputField).SetText("")
 				form.GetFormItemByLabel("Description").(*tview.InputField).SetText("")
-				form.GetFormItemByLabel("Secret").(*tview.InputField).SetText("")
+				form.GetFormItemByLabel("SimpleSecret").(*tview.InputField).SetText("")
 				inplainsight.InPlainSight.App.SetFocus(form.GetFormItem(0))
 
 				log.Println("added secret", secret)

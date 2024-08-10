@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/zangarmarsh/inplainsight/core/cryptography"
 	"github.com/zangarmarsh/inplainsight/core/events"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"log"
 	"strings"
@@ -17,18 +18,16 @@ const (
 	Version = "1.0.0"
 )
 
-const secretSeparator = "\x02"
-
 var InPlainSight = &InPlainSightClient{
 	Hosts: *NewHostsPool(),
 }
 
-func Conceal(secret *Secret) error {
+func Conceal(secret *secrets.SimpleSecret) error {
 	isCreating := false
 
-	// ToDo maybe worth creating a isEmpty() method on Secret
+	// ToDo maybe worth creating a isEmpty() method on SimpleSecret
 	secretMessage := []byte(secret.Serialize())
-	secretMessage = append(secretMessage, separator)
+	secretMessage = append(secretMessage, secrets.SecretSeparator)
 
 	if len(secretMessage) == 0 {
 		return errors.New("provided secret is empty")
@@ -56,8 +55,8 @@ func Conceal(secret *Secret) error {
 				return err
 			}
 
-			log.Printf("Secret: %+v (%+v)", secret, &secret)
-			log.Printf("Updating container file with secrets: %+v", secret.Container.secrets)
+			log.Printf("SimpleSecret: %+v (%+v)", secret, &secret)
+			log.Printf("Updating container file with secrets: %+v", secret.Container.GetItems())
 			secretMessage = []byte(secret.Container.Serialize())
 
 			secretMessage, err = cryptography.Encrypt(secretMessage, contentEncryptionKey)
@@ -95,8 +94,7 @@ func Conceal(secret *Secret) error {
 
 		// Clean up removable secret once they have been physically removed from the medium
 		for i, item := range InPlainSight.Secrets {
-			if item.deleatable {
-				log.Println("Secret", item, "is deleatable")
+			if item.IsDeleatable() {
 				InPlainSight.Secrets = append(InPlainSight.Secrets[:i], InPlainSight.Secrets[i+1:]...)
 
 				break
@@ -115,7 +113,7 @@ func Reveal(fileName string) error {
 	host := steganography.New(path)
 
 	if host != nil {
-		container := SecretsContainer{Host: host}
+		container := secrets.Container{Host: host}
 
 		if len(*host.Data()) > 0 {
 			var contentEncryptionKey []byte
@@ -135,7 +133,7 @@ func Reveal(fileName string) error {
 
 			container.Unserialize(string(decrypted))
 
-			for _, secret := range container.secrets {
+			for _, secret := range container.GetItems() {
 				secret.Container = &container
 				InPlainSight.Secrets = append(InPlainSight.Secrets, secret)
 

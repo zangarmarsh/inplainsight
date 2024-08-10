@@ -3,6 +3,7 @@ package inplainsight
 import (
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/events"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"github.com/zangarmarsh/inplainsight/core/utility/config"
 	"time"
 )
@@ -13,7 +14,7 @@ type InPlainSightClient struct {
 	App   *tview.Application
 	Pages *tview.Pages
 
-	Secrets []*Secret
+	Secrets []*secrets.SimpleSecret
 
 	Hosts HostsPool
 

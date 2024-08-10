@@ -1,25 +1,26 @@
 package inplainsight
 
 import (
+	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"golang.org/x/exp/rand"
 )
 
 type HostsPool struct {
-	pool []*SecretsContainer
+	pool []*secrets.Container
 }
 
 func NewHostsPool() *HostsPool {
 	return &HostsPool{
-		pool: make([]*SecretsContainer, 0),
+		pool: make([]*secrets.Container, 0),
 	}
 }
 
-func (p *HostsPool) Add(host *SecretsContainer) {
+func (p *HostsPool) Add(host *secrets.Container) {
 	p.pool = append(p.pool, host)
 }
 
-func (p *HostsPool) Random(requiredSpace int) *SecretsContainer {
-	var eligibles []*SecretsContainer
+func (p *HostsPool) Random(requiredSpace int) *secrets.Container {
+	var eligibles []*secrets.Container
 
 	for _, container := range p.pool {
 		if int((*container).Host.Cap()-(*container).Host.Len()) >= requiredSpace {

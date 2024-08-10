@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"log"
 )
@@ -12,7 +13,7 @@ func GetName() string {
 	return "edit"
 }
 
-func Create(secret *inplainsight.Secret) *pages.GridPage {
+func Create(secret *secrets.SimpleSecret) *pages.GridPage {
 	page := pages.GridPage{}
 	page.SetName(GetName())
 
@@ -34,12 +35,12 @@ func Create(secret *inplainsight.Secret) *pages.GridPage {
 	form.
 		AddInputField("Title", formTitle, 0, nil, nil).
 		AddInputField("Description", formDescription, 0, nil, nil).
-		AddPasswordField("Secret", formSecret, 0, '*', nil).
+		AddPasswordField("SimpleSecret", formSecret, 0, '*', nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Save", func() {
 			formTitle = form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
 			formDescription = form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
-			formSecret = form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
+			formSecret = form.GetFormItemByLabel("SimpleSecret").(*tview.InputField).GetText()
 
 			err := pages.Navigate("list")
 
