@@ -17,6 +17,9 @@ const (
 	SecretAdded
 	SecretUpdated
 
+	// Actions
+	SecretCopiedIntoClipboard
+
 	UserPreferenceInit
 	UserPreferenceChanged
 )

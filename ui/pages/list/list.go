@@ -12,7 +12,6 @@ import (
 	"github.com/zangarmarsh/inplainsight/ui/pages/newsecret"
 	"github.com/zangarmarsh/inplainsight/ui/services/logging"
 	"github.com/zangarmarsh/inplainsight/ui/widgets"
-	"golang.design/x/clipboard"
 	"log"
 	"strconv"
 	"strings"
@@ -45,13 +44,6 @@ func (r pageFactory) Create() pages.PageInterface {
 		})
 
 		for index, secret := range secrets {
-			pasteIntoClipboard := func() {
-				log.Println("Copying into clipboard")
-				clipboard.Write(clipboard.FmtText, []byte(filteredSecrets[*selectedListItem].GetSecret()))
-				logBox.AddLine(fmt.Sprintf("Secret '%s' copied into clipboard!", filteredSecrets[*selectedListItem].GetSecret()), logging.Info)
-				logBox.AddSeparator()
-			}
-
 			if len(searchQuery) == 0 || secret.Filter(searchQuery) {
 				filteredSecrets = append(
 					filteredSecrets,
@@ -63,7 +55,10 @@ func (r pageFactory) Create() pages.PageInterface {
 					secret.GetTitle(),
 					secret.GetDescription(),
 					0,
-					pasteIntoClipboard,
+					func() {
+
+						secret.DoAction()
+					},
 				)
 			}
 		}
@@ -331,11 +326,22 @@ func (r pageFactory) Create() pages.PageInterface {
 	inplainsight.InPlainSight.AddEventsListener(
 		[]events.EventType{events.Navigation},
 		func(event events.Event) {
-			log.Println("caught navigation event")
+			log.Println("caught navigation event", event.Data["slug"])
 			if event.Data["slug"] == "list" {
 				log.Println("setting focus into querry input..")
 				inplainsight.InPlainSight.App.SetFocus(queryInput)
+			} else {
+				queryInput.Blur()
+				resultList.Blur()
 			}
+		},
+	)
+
+	inplainsight.InPlainSight.AddEventsListener(
+		[]events.EventType{events.SecretCopiedIntoClipboard},
+		func(_ events.Event) {
+			logBox.AddLine("Secret copied into clipboard!", logging.Info)
+			logBox.AddSeparator()
 		},
 	)
 
@@ -345,29 +351,17 @@ func (r pageFactory) Create() pages.PageInterface {
 			if page := newsecret.Create(); page == nil {
 				widgets.ModalAlert("Generic error", nil)
 			} else {
-				queryInput.Blur()
-				resultList.Blur()
-				inplainsight.InPlainSight.App.SetFocus(page.GetPrimitive())
-				inplainsight.InPlainSight.Pages.AddAndSwitchToPage(newsecret.GetName(), page.GetPrimitive(), true)
+				pages.Navigate(page)
 			}
 
 		case tcell.KeyCtrlE:
-			queryInput.Blur()
-			resultList.Blur()
-
 			if page := editsecret.Create(filteredSecrets[*selectedListItem]); page == nil {
 				widgets.ModalAlert("Generic error", nil)
 			} else {
-				queryInput.Blur()
-				resultList.Blur()
-				inplainsight.InPlainSight.App.SetFocus(page.GetPrimitive())
-				inplainsight.InPlainSight.Pages.AddAndSwitchToPage(editsecret.GetName(), page.GetPrimitive(), true)
+				pages.Navigate(page)
 			}
 
 		case tcell.KeyCtrlD:
-			queryInput.Blur()
-			resultList.Blur()
-
 			widgets.ModalAlert("Are you sure you want to delete this secret?", func() {
 				filteredSecrets[*selectedListItem].MarkDeleatable()
 				err := inplainsight.Conceal(filteredSecrets[*selectedListItem])

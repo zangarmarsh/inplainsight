@@ -30,6 +30,8 @@ type SecretInterface interface {
 	//      find a smart way to remove it and go back automatically
 	GetForm() *tview.Form
 	Filter(query string) bool
+
+	DoAction()
 }
 
 type AbstractSecret struct {

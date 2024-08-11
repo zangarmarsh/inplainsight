@@ -27,6 +27,9 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	inplainsight.InPlainSight.App.
+		EnableMouse(true)
 }
 
 // ToDo: handle different verbosity levels rather than just one `v`
