@@ -52,13 +52,10 @@ func (r pageFactory) Create() pages.PageInterface {
 
 				resultList.InsertItem(
 					index,
-					secret.GetTitle(),
-					secret.GetDescription(),
+					fmt.Sprintf("%s%s%s%s", strings.Repeat(" ", 1), string(secret.GetIcon()), strings.Repeat(" ", 1), secret.GetTitle()),
+					fmt.Sprintf("%s%s", strings.Repeat(" ", 4), secret.GetDescription()),
 					0,
-					func() {
-
-						secret.DoAction()
-					},
+					secret.DoAction,
 				)
 			}
 		}
@@ -184,9 +181,13 @@ func (r pageFactory) Create() pages.PageInterface {
 
 	// Results
 	resultBox := tview.NewFlex().SetDirection(tview.FlexRow)
+
 	resultList := tview.NewList()
-	resultList.SetBorder(true)
-	resultList.SetBorderPadding(0, 0, 2, 2)
+	resultList.
+		SetBorder(true).
+		SetBorderPadding(1, 1, 2, 2)
+
+	resultList.SetHighlightFullLine(false)
 
 	resultBox.AddItem(resultList, 0, 1, false)
 	resultBox.SetTitle("Results")

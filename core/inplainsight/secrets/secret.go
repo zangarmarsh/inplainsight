@@ -32,6 +32,7 @@ type SecretInterface interface {
 	Filter(query string) bool
 
 	DoAction()
+	GetIcon() rune
 }
 
 type AbstractSecret struct {
@@ -53,4 +54,9 @@ func (s *AbstractSecret) SetContainer(container *Container) {
 
 func (s *AbstractSecret) GetContainer() *Container {
 	return s.container
+}
+
+// Generic icon
+func (s *AbstractSecret) GetIcon() rune {
+	return '📁'
 }
