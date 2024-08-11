@@ -24,7 +24,7 @@ func (c *Container) Serialize() (serialized string) {
 func (c *Container) Unserialize(content string) {
 	for _, singleSecretContent := range strings.Split(content, string(separator)) {
 		if len(singleSecretContent) > 0 {
-			if secret := RegisteredSecrets[MagicNumber(singleSecretContent[0])](singleSecretContent[1:]); secret != nil {
+			if secret := SecretsModelRegister[MagicNumber(singleSecretContent[0])](singleSecretContent[1:]); secret != nil {
 				c.secrets = append(c.secrets, secret)
 			}
 		}

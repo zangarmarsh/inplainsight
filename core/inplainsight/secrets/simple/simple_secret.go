@@ -17,7 +17,7 @@ type SimpleSecret struct {
 }
 
 func init() {
-	secrets.RegisteredSecrets[magicNumber] = func(serialized string) secrets.SecretInterface {
+	secrets.SecretsModelRegister[magicNumber] = func(serialized string) secrets.SecretInterface {
 		return (&SimpleSecret{}).Unserialize(serialized)
 	}
 }
