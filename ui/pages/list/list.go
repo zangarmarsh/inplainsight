@@ -37,7 +37,6 @@ var searchQuery string
 func (r pageFactory) Create() pages.PageInterface {
 	// Todo find a smarter way to filter the results
 	var filterResults = func(resultList *tview.List, secrets []secrets.SecretInterface) {
-		lowerCaseSearchQuery := strings.ToLower(strings.TrimLeft(searchQuery, " "))
 		resultList.Clear()
 		filteredSecrets = nil
 
@@ -53,9 +52,7 @@ func (r pageFactory) Create() pages.PageInterface {
 				logBox.AddSeparator()
 			}
 
-			if len(searchQuery) == 0 ||
-				strings.Contains(strings.ToLower(secret.GetTitle()), lowerCaseSearchQuery) ||
-				strings.Contains(strings.ToLower(secret.GetDescription()), lowerCaseSearchQuery) {
+			if len(searchQuery) == 0 || secret.Filter(searchQuery) {
 				filteredSecrets = append(
 					filteredSecrets,
 					secret,

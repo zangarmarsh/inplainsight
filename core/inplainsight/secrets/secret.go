@@ -29,6 +29,7 @@ type SecretInterface interface {
 	// Todo callingPage is needed since we need to know which page should we move on after the form has been submitted/canceled
 	//      find a smart way to remove it and go back automatically
 	GetForm() *tview.Form
+	Filter(query string) bool
 }
 
 type AbstractSecret struct {

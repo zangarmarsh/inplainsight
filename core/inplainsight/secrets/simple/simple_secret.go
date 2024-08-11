@@ -45,6 +45,13 @@ func (s *SimpleSecret) Unserialize(serialized string) secrets.SecretInterface {
 	}
 }
 
+func (s *SimpleSecret) Filter(query string) bool {
+	query = strings.ToLower(strings.Trim(query, " "))
+
+	return strings.Contains(strings.ToLower(s.GetTitle()), query) ||
+		strings.Contains(strings.ToLower(s.GetDescription()), query)
+}
+
 func (s *SimpleSecret) GetMagicNumber() secrets.MagicNumber {
 	return magicNumber
 }

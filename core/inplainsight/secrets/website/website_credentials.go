@@ -51,6 +51,14 @@ func (s *WebsiteCredential) Unserialize(serialized string) secrets.SecretInterfa
 	}
 }
 
+func (s *WebsiteCredential) Filter(query string) bool {
+	query = strings.ToLower(strings.Trim(query, " "))
+
+	return strings.Contains(strings.ToLower(s.website), query) ||
+		strings.Contains(strings.ToLower(s.note), query) ||
+		strings.Contains(strings.ToLower(s.account), query)
+}
+
 func (s *WebsiteCredential) GetMagicNumber() secrets.MagicNumber {
 	return magicNumber
 }
