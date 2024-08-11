@@ -18,11 +18,30 @@ It would be advisable to keep a couple of remote backups, just to ensure a good 
 
 ## Secrets
 ### How to implement your own secret structure
+Secret models are defined in `core/inplainsight/secrets/`. To create your own model you just need to create a struct
+which extends `secrets.AbstractSecret` and implements `secrets.SecretInterface`.
+
+Look into [SimpleSecret](core/inplainsight/secrets/simple/)
+or [WebsiteCredential](core/inplainsight/secrets/website/) if you need an example of implementation.
+
+When defining a new model you'll also need to specify a custom `secrets.MagicNumber`.
+Please keep in mind that value 0x00 is reserved.
+
+In the end, [register](core/inplainsight/secrets/website/website_credentials.go#L20) it in an init function to make it globally available:
+```golang
+func init() {
+	secrets.SecretsModelRegister[magicNumber] = func(serialized string)secrets.SecretInterface {
+	// do something here if you need to...
+        return (&YourSecretModel{}).Unserialize(serialized)
+	}
+}
+```
 
 ### Supported secret structures
 | ID   | Type     |Fields|
 |------|----------|------|
  | 0x01 | `Secret` |Title, Description, Secret|
+ | 0x02 | `WebsiteCredential` | URL, Note, Account, Password| 
 
 ## Media formats
 ### How to implement a new media format
@@ -71,15 +90,21 @@ func init() {
 - ~~Output image formats other than actual `png`~~ ( ngl, that was faked atm - needs lots of effort )
 - Improve `Secret`
   - ~~Multiple secrets in one medium~~
-  - Make `Secret` more abstract and implementable in order to be easily extended
-  - Support `single-file` mode
+  - ~~Make `Secret` more abstract and implementable in order to be easily extended~~
   - Give the user the ability to choose which file will be used (default will be `random`)
   - Exclusive host for one secret
   - `stealth mode` file header encryption
+  - Add secret icons
+  - Add custom `Action`
+- Feature that allows to move a specific `Secret` into another choosable medium
+- New `Secret` models:
+  - ~~Website~~
+  - Note
+  - File
 - Optional user preferences persistance
   - ~~Pool path at login~~
   - ~~Logout on screen lock~~
-  - Session timeout while inactive
+  - ~~Session timeout while inactive~~
   - `haveibeenpwned` optional periodical checks
 - Blank image generation
 - Support new data sources
@@ -87,13 +112,13 @@ func init() {
   - `S3`
   - `FTP`
   - `SSH`
+- Support `single-file` initialization mode
 - Dockerization
-- self-hostable version
-  - optional `2FA`
-    - Evaluate if it makes sense using it even locally
-- Pool of data-sources wrapped in a file
+- Self-hostable version
+  - optional `2FA` through TOTP
 - Support `hardware keys`
 - Steganography the following media formats:
-    - Audio files `MP3/WAV`
-    - `MP4`
+    - Audio files `MP3/WAV` (?)
+    - `MP4` (?)
 - Browser extension
+- Pool of data-sources from text file (?)
