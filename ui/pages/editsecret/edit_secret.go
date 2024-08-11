@@ -16,7 +16,7 @@ func Create(secret secrets.SecretInterface) *pages.GridPage {
 	page := pages.GridPage{}
 	page.SetName(GetName())
 
-	form := secret.GetForm(GetName())
+	form := secret.GetForm()
 
 	form.
 		SetBorder(false)

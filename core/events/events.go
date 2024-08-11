@@ -11,6 +11,8 @@ const (
 	AppLogout
 	UserLoggedIn
 
+	Navigation
+
 	SecretDiscovered
 	SecretAdded
 	SecretUpdated

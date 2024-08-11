@@ -9,6 +9,9 @@ import (
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"log"
 	"time"
+
+	_ "github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/simple"
+	_ "github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/website"
 )
 
 // Generic side effects management
@@ -23,7 +26,6 @@ func init() {
 		if err != nil {
 			log.Println(err)
 		}
-
 	})
 
 	inplainsight.InPlainSight.AddEventsListener([]events.EventType{events.AppLogout}, func(event events.Event) {
@@ -34,12 +36,7 @@ func init() {
 		inplainsight.InPlainSight.App.SetMouseCapture(nil)
 
 		if stopCaringAboutLockScreen != nil {
-			stopCaringAboutLockScreen <- true
 			close(stopCaringAboutLockScreen)
-		}
-
-		if interactionsChannel != nil {
-			close(interactionsChannel)
 		}
 	})
 
@@ -49,19 +46,18 @@ func init() {
 			if event.EventType == events.AppInit || (event.Data["pointer"] != nil && event.Data["pointer"] == &inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock) {
 				if inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock {
 					go func(ch *chan bool) {
-						if *ch == nil {
-							*ch = make(chan bool)
-						}
+						*ch = make(chan bool)
 
 						locked := lockscreendetector.Analyze(ch)
 
 						if <-*locked {
-							log.Println("The screen have been locked, logging out...")
 							inplainsight.InPlainSight.Logout()
 						}
 					}(&stopCaringAboutLockScreen)
-				} else if stopCaringAboutLockScreen != nil {
-					stopCaringAboutLockScreen <- true
+				} else {
+					if stopCaringAboutLockScreen != nil {
+						close(stopCaringAboutLockScreen)
+					}
 				}
 			}
 		}
@@ -77,8 +73,8 @@ func init() {
 
 				if inplainsight.InPlainSight.UserPreferences.AFKTimeout != 0 {
 
-					if inplainsight.InPlainSight.UserPreferences.AFKTimeout < 5 {
-						inplainsight.InPlainSight.UserPreferences.AFKTimeout = 5
+					if inplainsight.InPlainSight.UserPreferences.AFKTimeout < 1 {
+						inplainsight.InPlainSight.UserPreferences.AFKTimeout = 1
 					}
 
 					if afkTimer != nil {
@@ -108,7 +104,7 @@ func init() {
 
 								afkTimer.Reset(time.Minute * time.Duration(inplainsight.InPlainSight.UserPreferences.AFKTimeout))
 							default:
-								time.Sleep(time.Millisecond * 10)
+								time.Sleep(time.Millisecond * 5)
 							}
 						}
 					}()
@@ -139,10 +135,6 @@ func init() {
 				} else {
 					if afkTimer != nil {
 						afkTimer.Stop()
-					}
-
-					if interactionsChannel != nil {
-						close(interactionsChannel)
 					}
 				}
 			}

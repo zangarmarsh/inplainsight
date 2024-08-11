@@ -3,8 +3,10 @@ package pages
 import (
 	"errors"
 	"fmt"
+	"github.com/zangarmarsh/inplainsight/core/events"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"log"
+	"time"
 
 	"github.com/rivo/tview"
 )
@@ -64,6 +66,15 @@ func Navigate(path string) error {
 				true,
 				false,
 			)
+
+			inplainsight.InPlainSight.Trigger(
+				events.Event{
+					CreatedAt: time.Now(),
+					EventType: events.Navigation,
+					Data: map[string]interface{}{
+						"slug": path,
+					},
+				})
 		}
 
 		inplainsight.InPlainSight.Pages.SwitchToPage(path)

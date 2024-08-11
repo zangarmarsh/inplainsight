@@ -7,33 +7,26 @@ import (
 	"log"
 )
 
-func (s *SimpleSecret) GetForm(callingPage string) *tview.Form {
+func (s *SimpleSecret) GetForm() *tview.Form {
 	form := tview.NewForm()
-
-	form.
-		SetBorder(false)
 
 	form.
 		AddInputField("Title", s.GetTitle(), 0, nil, nil).
 		AddInputField("Description", s.GetDescription(), 0, nil, nil).
 		AddPasswordField("Secret", s.GetSecret(), 0, '*', nil).
-		SetButtonsAlign(tview.AlignCenter).
+		AddButton("Cancel", func() {
+			pages.GoBack()
+		}).
 		AddButton("Save", func() {
 			formTitle := form.GetFormItemByLabel("Title").(*tview.InputField).GetText()
 			formDescription := form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
 			formSecret := form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
 
-			err := pages.Navigate("list")
-			if err != nil {
-				// Todo handle it
-				log.Fatal(err)
-			}
-
 			s.SetTitle(formTitle)
 			s.SetDescription(formDescription)
 			s.SetSecret(formSecret)
 
-			err = inplainsight.Conceal(s)
+			err := inplainsight.Conceal(s)
 
 			if err == nil {
 				form.GetFormItemByLabel("Title").(*tview.InputField).SetText("")
@@ -42,13 +35,11 @@ func (s *SimpleSecret) GetForm(callingPage string) *tview.Form {
 				inplainsight.InPlainSight.App.SetFocus(form.GetFormItem(0))
 
 				log.Println("added secret", s)
-			}
 
-			inplainsight.InPlainSight.Pages.RemovePage(callingPage)
+				pages.GoBack()
+			}
 		}).
-		AddButton("Back", func() {
-			inplainsight.InPlainSight.Pages.RemovePage(callingPage)
-		})
+		SetButtonsAlign(tview.AlignRight)
 
 	return form
 }

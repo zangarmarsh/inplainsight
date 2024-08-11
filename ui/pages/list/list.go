@@ -34,15 +34,9 @@ var filteredSecrets []secrets.SecretInterface
 var selectedListItem *int
 var searchQuery string
 
-var createdNTimes = 0
-
 func (r pageFactory) Create() pages.PageInterface {
 	// Todo find a smarter way to filter the results
 	var filterResults = func(resultList *tview.List, secrets []secrets.SecretInterface) {
-		for path, secret := range secrets {
-			log.Printf("%+v in file %+v\n", secret, path)
-		}
-
 		lowerCaseSearchQuery := strings.ToLower(strings.TrimLeft(searchQuery, " "))
 		resultList.Clear()
 		filteredSecrets = nil
@@ -110,7 +104,7 @@ func (r pageFactory) Create() pages.PageInterface {
 		logBox.AddLine("Scanning directory...", logging.Info)
 		logBox.AddSeparator()
 
-		footer.AddItem(primitive, 0, 1, true)
+		footer.AddItem(primitive, 0, 1, false)
 	}
 
 	// User preferences form box
@@ -193,7 +187,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			logoutOnScreenLockCheckbox.SetChecked(inplainsight.InPlainSight.UserPreferences.LogoutOnScreenLock)
 		}
 
-		footer.AddItem(userPreferenceForm, 50, 1, true)
+		footer.AddItem(userPreferenceForm, 50, 1, false)
 	}
 
 	// Results
@@ -258,7 +252,6 @@ func (r pageFactory) Create() pages.PageInterface {
 	})
 
 	resultList.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		log.Println("resultList has focus")
 		if event.Key() == tcell.KeyBacktab {
 			resultList.Blur()
 			queryInput.Focus(nil)
@@ -309,8 +302,8 @@ func (r pageFactory) Create() pages.PageInterface {
 				logLine = logLine + " - " + event.Data["secret"].(secrets.SecretInterface).GetDescription()
 			}
 
-			logBox.AddLine(fmt.Sprintf("Found secret '%s' in file", logLine), logging.Info)
-			logBox.AddSeparator()
+			// logBox.AddLine(fmt.Sprintf("Found secret '%s' in file", logLine), logging.Info)
+			// logBox.AddSeparator()
 		})
 
 	inplainsight.InPlainSight.AddEventsListener(
@@ -338,10 +331,20 @@ func (r pageFactory) Create() pages.PageInterface {
 		},
 	)
 
+	inplainsight.InPlainSight.AddEventsListener(
+		[]events.EventType{events.Navigation},
+		func(event events.Event) {
+			log.Println("caught navigation event")
+			if event.Data["slug"] == "list" {
+				log.Println("setting focus into querry input..")
+				inplainsight.InPlainSight.App.SetFocus(queryInput)
+			}
+		},
+	)
+
 	container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyCtrlN:
-			log.Println("Detected ctrl + n")
 			if page := newsecret.Create(); page == nil {
 				widgets.ModalAlert("Generic error", nil)
 			} else {
@@ -372,7 +375,10 @@ func (r pageFactory) Create() pages.PageInterface {
 				filteredSecrets[*selectedListItem].MarkDeleatable()
 				err := inplainsight.Conceal(filteredSecrets[*selectedListItem])
 				if err != nil {
-					widgets.ModalAlert("There was an error deleting the secret, please retry", nil)
+					widgets.ModalAlert("There was an error deleting the secret, please retry", func() {
+						pages.GoBack()
+					})
+
 					return
 				}
 

@@ -13,7 +13,7 @@ func Analyze(killSignal *chan bool) *chan bool {
 			case <-*killSignal:
 				return
 			default:
-				time.Sleep(10 * time.Millisecond)
+				time.Sleep(5 * time.Millisecond)
 				if isScreenLocked() {
 					detectorChan <- true
 				}
