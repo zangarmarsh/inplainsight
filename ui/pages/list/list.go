@@ -226,7 +226,9 @@ func (r pageFactory) Create() pages.PageInterface {
 	queryBox := tview.NewGrid()
 	queryBox.SetSize(1, 1, 1, 1)
 	queryInput := tview.NewInputField().
-		SetPlaceholder("Search for anything")
+		SetPlaceholder("Search...").
+		SetPlaceholderTextColor(tcell.ColorWhite)
+
 	queryInput.SetBorderPadding(0, 0, 1, 1)
 	queryBox.AddItem(queryInput, 1, 1, 1, 1, 0, 0, true)
 	queryBox.SetBorder(true).SetBorderPadding(0, 0, 0, 0)
@@ -329,8 +331,8 @@ func (r pageFactory) Create() pages.PageInterface {
 		func(event events.Event) {
 			log.Println("caught navigation event", event.Data["slug"])
 			if event.Data["slug"] == "list" {
-				log.Println("setting focus into querry input..")
-				inplainsight.InPlainSight.App.SetFocus(queryInput)
+				log.Println("setting focus into query input..")
+				// inplainsight.InPlainSight.App.SetFocus(queryInput)
 			} else {
 				queryInput.Blur()
 				resultList.Blur()

@@ -1,16 +1,14 @@
-package website
+package note
 
 import (
 	"fmt"
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
-	"github.com/zangarmarsh/inplainsight/ui/widgets"
-	"golang.design/x/clipboard"
-	"os/exec"
+	"strings"
 )
 
-func (s *WebsiteCredential) DoAction() {
+func (s *Note) DoAction() {
 	var txtView *tview.TextView
 	var commandList *tview.List
 
@@ -29,8 +27,8 @@ func (s *WebsiteCredential) DoAction() {
 	flex.SetBorderPadding(0, 0, 1, 1)
 
 	grid.
-		AddItem(flex, 2, 2, 4, 8, 30, 200, false).
-		AddItem(flex, 1, 1, 4, 10, 0, 0, false)
+		AddItem(flex, 2, 2, 8, 8, 30, 200, false).
+		AddItem(flex, 1, 1, 8, 10, 0, 0, false)
 
 	{
 		commandList = tview.NewList()
@@ -39,19 +37,11 @@ func (s *WebsiteCredential) DoAction() {
 			SetBorderPadding(2, 2, 2, 2)
 
 		commandList.
-			AddItem("Go to website", "", 'g', func() {
-				cmd := exec.Command("xdg-open", s.website)
-				err := cmd.Run()
-
-				if err != nil {
-					widgets.ModalAlert(err.Error(), nil)
-				}
+			AddItem("Show note", "", 's', func() {
+				txtView.SetText(fmt.Sprintf("%s\n\n%s", s.title, s.note))
 			}).
-			AddItem("Copy username", "", 'u', func() {
-				clipboard.Write(clipboard.FmtText, []byte(s.account))
-			}).
-			AddItem("Copy password", "", 'p', func() {
-				clipboard.Write(clipboard.FmtText, []byte(s.password))
+			AddItem("Hide note", "", 'h', func() {
+				txtView.SetText(fmt.Sprintf("%s\n\n%s", s.title, strings.Repeat("*", len(s.note)%120)))
 			}).
 			AddItem("Go back to secrets list", "", 'q', func() {
 				pages.GoBack()
@@ -59,8 +49,12 @@ func (s *WebsiteCredential) DoAction() {
 	}
 
 	{
+		text := s.note
+		if s.isHidden {
+			text = strings.Repeat("*", len(s.note)%120)
+		}
 		txtView = tview.NewTextView().
-			SetText(fmt.Sprintf("%s\nu: %s\np: %s\n", s.website, s.account, s.password))
+			SetText(fmt.Sprintf("%s\n\n%s", s.title, text))
 
 		txtView.
 			SetBorder(true).

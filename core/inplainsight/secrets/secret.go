@@ -53,5 +53,5 @@ func (s *AbstractSecret) GetContainer() *Container {
 
 // Generic icon
 func (s *AbstractSecret) GetIcon() rune {
-	return '📁'
+	return '👤'
 }

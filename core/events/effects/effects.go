@@ -10,6 +10,8 @@ import (
 	"log"
 	"time"
 
+	// Find a better place to import secrets models
+	_ "github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/note"
 	_ "github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/simple"
 	_ "github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/website"
 )

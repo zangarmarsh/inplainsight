@@ -6,6 +6,7 @@ import (
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/note"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/simple"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/website"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
@@ -79,6 +80,12 @@ func Create() *pages.GridPage {
 	listOfModels.
 		AddItem("Website", "URL/Note/Account/Password", 0, func() {
 			secretModel = &website.WebsiteCredential{}
+			setSecretForm()
+		})
+
+	listOfModels.
+		AddItem("Note", "Title/Note", 0, func() {
+			secretModel = &note.Note{}
 			setSecretForm()
 		})
 
