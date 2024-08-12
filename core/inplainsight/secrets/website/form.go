@@ -19,10 +19,10 @@ func (s *WebsiteCredential) GetForm() *tview.Form {
 			pages.GoBack()
 		}).
 		AddButton("Save", func() {
-			s.SetTitle(form.GetFormItemByLabel("URL").(*tview.InputField).GetText())
-			s.SetDescription(form.GetFormItemByLabel("Note").(*tview.InputField).GetText())
+			s.website = form.GetFormItemByLabel("URL").(*tview.InputField).GetText()
+			s.note = form.GetFormItemByLabel("Note").(*tview.InputField).GetText()
 			s.account = form.GetFormItemByLabel("User").(*tview.InputField).GetText()
-			s.SetSecret(form.GetFormItemByLabel("Password").(*tview.InputField).GetText())
+			s.password = form.GetFormItemByLabel("Password").(*tview.InputField).GetText()
 
 			err := inplainsight.Conceal(s)
 

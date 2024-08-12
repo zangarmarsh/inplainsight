@@ -310,7 +310,7 @@ func (r pageFactory) Create() pages.PageInterface {
 	inplainsight.InPlainSight.AddEventsListener(
 		[]events.EventType{events.SecretAdded},
 		func(event events.Event) {
-			resultList.AddItem(event.Data["secret"].(secrets.SecretInterface).GetSecret(), event.Data["secret"].(secrets.SecretInterface).GetDescription(), 0, nil)
+			resultList.AddItem(event.Data["secret"].(secrets.SecretInterface).GetTitle(), event.Data["secret"].(secrets.SecretInterface).GetDescription(), 0, nil)
 			filterResults(resultList, inplainsight.InPlainSight.Secrets)
 			logBox.AddLine("Added a new secret", logging.Info)
 			logBox.AddSeparator()

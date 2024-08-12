@@ -11,9 +11,9 @@ func (s *SimpleSecret) GetForm() *tview.Form {
 	form := tview.NewForm()
 
 	form.
-		AddInputField("Title", s.GetTitle(), 0, nil, nil).
-		AddInputField("Description", s.GetDescription(), 0, nil, nil).
-		AddPasswordField("Secret", s.GetSecret(), 0, '*', nil).
+		AddInputField("Title", s.title, 0, nil, nil).
+		AddInputField("Description", s.description, 0, nil, nil).
+		AddPasswordField("Secret", s.secret, 0, '*', nil).
 		AddButton("Cancel", func() {
 			pages.GoBack()
 		}).
@@ -22,9 +22,9 @@ func (s *SimpleSecret) GetForm() *tview.Form {
 			formDescription := form.GetFormItemByLabel("Description").(*tview.InputField).GetText()
 			formSecret := form.GetFormItemByLabel("Secret").(*tview.InputField).GetText()
 
-			s.SetTitle(formTitle)
-			s.SetDescription(formDescription)
-			s.SetSecret(formSecret)
+			s.title = formTitle
+			s.description = formDescription
+			s.secret = formSecret
 
 			err := inplainsight.Conceal(s)
 

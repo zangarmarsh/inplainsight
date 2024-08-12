@@ -79,14 +79,6 @@ func (s *WebsiteCredential) GetDescription() string {
 	return s.note
 }
 
-func (s *WebsiteCredential) SetSecret(password string) {
-	s.password = password
-
-}
-func (s *WebsiteCredential) GetSecret() string {
-	return s.password
-}
-
 func (s *WebsiteCredential) GetIcon() rune {
 	return '🌐'
 }
