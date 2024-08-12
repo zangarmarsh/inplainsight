@@ -35,6 +35,8 @@ func init() {
 		inplainsight.InPlainSight.App.SetInputCapture(nil)
 		inplainsight.InPlainSight.App.SetMouseCapture(nil)
 
+		stopCaringAboutLockScreen <- true
+
 		if stopCaringAboutLockScreen != nil {
 			close(stopCaringAboutLockScreen)
 		}
@@ -57,6 +59,7 @@ func init() {
 				} else {
 					if stopCaringAboutLockScreen != nil {
 						close(stopCaringAboutLockScreen)
+						stopCaringAboutLockScreen = nil
 					}
 				}
 			}
