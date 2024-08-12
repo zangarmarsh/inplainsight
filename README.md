@@ -94,8 +94,8 @@ func init() {
   - Give the user the ability to choose which file will be used (default will be `random`)
   - Exclusive host for one secret
   - `stealth mode` file header encryption
-  - Add secret icons
-  - Add custom `Action`
+  - ~~Add secret icons~~
+  - ~~Add custom `Action`~~
 - Feature that allows to move a specific `Secret` into another choosable medium
 - New `Secret` models:
   - ~~Website~~
