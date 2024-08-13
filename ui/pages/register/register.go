@@ -2,9 +2,11 @@ package register
 
 import (
 	"fmt"
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/events"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
+	"github.com/zangarmarsh/inplainsight/core/utility"
 	"github.com/zangarmarsh/inplainsight/core/utility/config"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"github.com/zangarmarsh/inplainsight/ui/widgets"
@@ -43,9 +45,28 @@ func (r pageFactory) Create() pages.PageInterface {
 		Data:      map[string]interface{}{},
 	})
 
+	poolPathInput := tview.NewInputField()
+	poolPathInput.
+		SetLabel("Pool path").
+		SetText(inplainsight.InPlainSight.UserPreferences.PoolPath).
+		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			if event.Key() == tcell.KeyTab {
+				if prevision := utility.SuggestFSPath(poolPathInput.GetText()); prevision != "" {
+					if prevision != poolPathInput.GetText() {
+						poolPathInput.SetText(prevision)
+						return nil
+					}
+				} else {
+					return nil
+				}
+			}
+
+			return event
+		})
+
 	form.
 		AddPasswordField("Master Password", "", 0, '*', nil).
-		AddInputField("Pool path", inplainsight.InPlainSight.UserPreferences.PoolPath, 0, nil, nil).
+		AddFormItem(poolPathInput).
 		AddCheckbox("Remember path", inplainsight.InPlainSight.UserPreferences.PoolPath != "", nil).
 		SetButtonsAlign(tview.AlignCenter).
 		AddButton("Register", func() {
