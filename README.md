@@ -25,7 +25,7 @@ Look into [SimpleSecret](core/inplainsight/secrets/simple/)
 or [WebsiteCredential](core/inplainsight/secrets/website/) if you need an example of implementation.
 
 When defining a new model you'll also need to specify a custom `secrets.MagicNumber`.
-Please keep in mind that value 0x00 is reserved.
+Please keep in mind that value 0x00 and 0x03 are reserved.
 
 In the end, [register](core/inplainsight/secrets/website/website_credentials.go#L20) it in an init function to make it globally available:
 ```golang
