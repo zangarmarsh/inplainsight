@@ -50,8 +50,8 @@ func SuggestFSPath(query string) (suggestion string) {
 	}
 
 	// If the query matches an existing file just get back
-	if stat, err := os.Stat(query); err != nil {
-		if stat != nil && stat.Mode().IsRegular() {
+	if stat, err := os.Stat(query); err == nil {
+		if stat != nil && (stat.Mode().IsRegular() || stat.Mode().IsDir()) {
 			suggestion = query
 			return
 		}
