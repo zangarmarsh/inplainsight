@@ -14,7 +14,24 @@ import (
 type PageFactoryDictionary map[string]PageFactoryInterface
 
 var PageFactories = make(PageFactoryDictionary)
-var history []string
+
+type NavigationHistory struct {
+	stack []string
+}
+
+func (n *NavigationHistory) Push(fragment string) {
+	n.stack = append(n.stack, fragment)
+}
+
+func (n *NavigationHistory) Pop() (fragment string) {
+	lastItemIndex := len(n.stack) - 1
+	fragment = n.stack[lastItemIndex]
+	n.stack = n.stack[:lastItemIndex]
+
+	return
+}
+
+var History = NavigationHistory{}
 
 type PageFactoryInterface interface {
 	Create() PageInterface
@@ -86,7 +103,7 @@ func Navigate(in any) error {
 	}
 
 	if inplainsight.InPlainSight.Pages.HasPage(pageName) {
-		history = append(history, pageName)
+		History.Push(pageName)
 
 		inplainsight.InPlainSight.Trigger(
 			events.Event{
@@ -110,9 +127,9 @@ func Navigate(in any) error {
 }
 
 func GoBack() error {
-	page := history[len(history)-2]
+	page := History.stack[len(History.stack)-2]
 
-	log.Printf("navigating back to %s [%v]", page, history)
+	log.Printf("navigating back to %s [%v]", page, History)
 	err := Navigate(page)
 
 	return err

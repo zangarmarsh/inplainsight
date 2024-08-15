@@ -56,7 +56,14 @@ func NewModal(modalType ModalType, text string, okButtonTxt string, callback fun
 			if okButtonTxt != "" && buttonLabel == okButtonTxt && callback != nil {
 				callback()
 			}
-			pages.GoBack()
+
+			// Remove this the modal page from within the history preventing any accidental GoBack invocation
+			{
+				pages.GoBack()
+				pages.History.Pop()
+				pages.History.Pop()
+			}
+
 			inplainsight.InPlainSight.Pages.RemovePage(pageName)
 		})
 
