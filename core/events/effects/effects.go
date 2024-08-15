@@ -11,6 +11,7 @@ import (
 	"time"
 
 	// Find a better place to import secrets models
+	_ "github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/file"
 	_ "github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/note"
 	_ "github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/simple"
 	_ "github.com/zangarmarsh/inplainsight/core/inplainsight/secrets/website"
@@ -69,9 +70,6 @@ func init() {
 
 		// Toggle AFK timeout
 		{
-			// Todo implement countdown using https://pkg.go.dev/github.com/rivo/tview#Application.SetInputCapture
-			//  and https://pkg.go.dev/github.com/rivo/tview#Application.SetMouseCapture
-
 			if event.EventType == events.AppInit || (event.Data["pointer"] != nil &&
 				event.Data["pointer"] == &inplainsight.InPlainSight.UserPreferences.AFKTimeout) {
 				var afkTimer *time.Timer

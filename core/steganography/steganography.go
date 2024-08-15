@@ -43,16 +43,6 @@ func (h *Host) SetPath(path string) {
 	h.path = path
 }
 
-func (h *Host) Len() uint64 {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (h *Host) Cap() uint64 {
-	// TODO implement me
-	panic("implement me")
-}
-
 // Taken an uint8 array in input, split it into chunks of bits `bits` long
 func CutYarnChunks(c chan uint8, yarn []uint8, bits int) {
 	iterations := int(math.Ceil(float64(unsafe.Sizeof(yarn[0])) * float64(8) / float64(bits)))

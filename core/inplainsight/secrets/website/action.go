@@ -44,7 +44,7 @@ func (s *WebsiteCredential) DoAction() {
 				err := cmd.Run()
 
 				if err != nil {
-					widgets.ModalAlert(err.Error(), nil)
+					widgets.NewModal(widgets.ModalAlert, err.Error(), "", nil)
 				}
 			}).
 			AddItem("Copy username", "", 'u', func() {

@@ -57,7 +57,7 @@ func Navigate(in any) error {
 	var page PageInterface
 	var pageName string
 
-	switch in.(type) {
+	switch sType := in.(type) {
 	case string:
 		if !inplainsight.InPlainSight.Pages.HasPage(in.(string)) {
 			if PageFactories[in.(string)] != nil {
@@ -72,7 +72,7 @@ func Navigate(in any) error {
 		pageName = page.GetName()
 	default:
 		// Todo clean'em up
-		log.Fatalln("Unsupported type of page")
+		log.Fatalln("Unsupported type of page", sType)
 		return errors.New("Unsupported type of page")
 	}
 

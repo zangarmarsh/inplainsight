@@ -334,6 +334,7 @@ func (r pageFactory) Create() pages.PageInterface {
 				log.Println("setting focus into query input..")
 				// inplainsight.InPlainSight.App.SetFocus(queryInput)
 			} else {
+				// Reset their active focus manually because other automatic methods do not work
 				queryInput.Blur()
 				resultList.Blur()
 			}
@@ -351,25 +352,25 @@ func (r pageFactory) Create() pages.PageInterface {
 	container.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyCtrlN:
-			if page := newsecret.Create(); page == nil {
-				widgets.ModalAlert("Generic error", nil)
-			} else {
+			if page := newsecret.Create(); page != nil {
 				pages.Navigate(page)
+			} else {
+				widgets.NewModal(widgets.ModalAlert, "Generic error", "", nil)
 			}
 
 		case tcell.KeyCtrlE:
-			if page := editsecret.Create(filteredSecrets[*selectedListItem]); page == nil {
-				widgets.ModalAlert("Generic error", nil)
-			} else {
+			if page := editsecret.Create(filteredSecrets[*selectedListItem]); page != nil {
 				pages.Navigate(page)
+			} else {
+				widgets.NewModal(widgets.ModalAlert, "Generic error", "", nil)
 			}
 
 		case tcell.KeyCtrlD:
-			widgets.ModalAlert("Are you sure you want to delete this secret?", func() {
+			widgets.NewModal(widgets.ModalAlert, "Are you sure you want to delete this secret?", "OK", func() {
 				filteredSecrets[*selectedListItem].MarkDeleatable()
 				err := inplainsight.Conceal(filteredSecrets[*selectedListItem])
 				if err != nil {
-					widgets.ModalAlert("There was an error deleting the secret, please retry", func() {
+					widgets.NewModal(widgets.ModalAlert, "There was an error deleting the secret, please retry", "", func() {
 						pages.GoBack()
 					})
 

@@ -111,7 +111,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			files, err := os.ReadDir(path)
 			if err != nil {
 				log.Println(err)
-				widgets.ModalAlert(err.Error(), nil)
+				widgets.NewModal(widgets.ModalAlert, err.Error(), "", nil)
 				inplainsight.InPlainSight.App.ForceDraw()
 				return
 			}
