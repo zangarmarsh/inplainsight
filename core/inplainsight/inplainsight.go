@@ -23,7 +23,7 @@ var InPlainSight = &InPlainSightClient{
 }
 
 func Conceal(secret secrets.SecretInterface) error {
-	isCreating := false
+	isCreating := true
 
 	// ToDo maybe worth creating a isEmpty() method on SimpleSecret
 	secretMessage := []byte(secret.Serialize())
@@ -36,10 +36,16 @@ func Conceal(secret secrets.SecretInterface) error {
 	var contentEncryptionKey []byte
 	var err error
 
-	// If `secret.Container` is null it will likely mean that we're creating it
-	if secret.GetContainer() == nil {
-		isCreating = true
+	for _, s := range InPlainSight.Secrets {
+		if &s == &secret {
+			isCreating = false
+			break
+		}
+	}
 
+	log.Println("Is creating?", isCreating, "container", secret.GetContainer())
+
+	if secret.GetContainer() == nil {
 		// At this point there should be already a bunch of secret hosts
 		secret.SetContainer(InPlainSight.Hosts.Random(len(secretMessage)))
 
@@ -116,6 +122,8 @@ func Reveal(fileName string) error {
 		container := secrets.Container{Host: host}
 
 		if len(*host.Data()) > 0 {
+			InPlainSight.Hosts.Add(&container)
+
 			var contentEncryptionKey []byte
 			var err error
 
@@ -146,8 +154,6 @@ func Reveal(fileName string) error {
 				})
 			}
 		}
-
-		InPlainSight.Hosts.Add(&container)
 	}
 
 	return nil

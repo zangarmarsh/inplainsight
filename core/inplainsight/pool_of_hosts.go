@@ -3,6 +3,7 @@ package inplainsight
 import (
 	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"golang.org/x/exp/rand"
+	"strings"
 )
 
 type HostsPool struct {
@@ -33,6 +34,22 @@ func (p *HostsPool) Random(requiredSpace int) *secrets.Container {
 	}
 
 	return eligibles[rand.Intn(len(eligibles))]
+}
+
+func (p *HostsPool) SearchByContainerPath(query string) []*secrets.Container {
+	var results []*secrets.Container
+
+	for _, pool := range p.pool {
+		if strings.Contains(pool.Host.GetPath(), query) {
+			results = append(results, pool)
+		}
+	}
+
+	return results
+}
+
+func (p *HostsPool) List() []*secrets.Container {
+	return p.pool
 }
 
 func (p *HostsPool) Reset() {

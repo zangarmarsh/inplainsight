@@ -107,8 +107,8 @@ func Create() *pages.GridPage {
 	flex.AddItem(nil, 0, 1, false)
 
 	grid.
-		AddItem(flex, 2, 2, 4, 8, 30, 200, true).
-		AddItem(flex, 1, 1, 4, 10, 0, 0, true)
+		AddItem(flex, 2, 2, 6, 8, 30, 200, true).
+		AddItem(flex, 1, 1, 6, 10, 0, 0, true)
 
 	page.SetPrimitive(grid)
 

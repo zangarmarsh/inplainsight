@@ -3,17 +3,38 @@ package simple
 import (
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"log"
+	"path/filepath"
 )
 
 func (s *SimpleSecret) GetForm() *tview.Form {
 	form := tview.NewForm()
 
+	dedicatedHostInput := tview.NewInputField()
+	dedicatedHostInput.
+		SetLabel("Container").
+		SetAutocompleteFunc(func(currentText string) (entries []string) {
+			if results := inplainsight.InPlainSight.Hosts.SearchByContainerPath(currentText); results != nil {
+				for _, result := range results {
+					// Todo check if secret can be contained by chosen container
+					entries = append(entries, filepath.Base(result.Host.GetPath()))
+				}
+			}
+
+			if len(entries) > 1 {
+				entries = append([]string{"Random"}, entries...)
+			}
+
+			return
+		})
+
 	form.
 		AddInputField("Title", s.title, 0, nil, nil).
 		AddInputField("Description", s.description, 0, nil, nil).
 		AddPasswordField("Secret", s.secret, 0, '*', nil).
+		AddFormItem(dedicatedHostInput).
 		AddButton("Cancel", func() {
 			pages.GoBack()
 		}).
@@ -25,6 +46,14 @@ func (s *SimpleSecret) GetForm() *tview.Form {
 			s.title = formTitle
 			s.description = formDescription
 			s.secret = formSecret
+
+			if container := dedicatedHostInput.GetText(); container != "Random" {
+				log.Printf("setting %s as container\n", filepath.Join(inplainsight.InPlainSight.Path, container))
+				if container := inplainsight.InPlainSight.Hosts.SearchByContainerPath(filepath.Join(inplainsight.InPlainSight.Path, container)); len(container) == 1 {
+					container := container[0]
+					secrets.LinkSecretAndContainer(s, container)
+				}
+			}
 
 			err := inplainsight.Conceal(s)
 

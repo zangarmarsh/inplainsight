@@ -296,9 +296,6 @@ func (r pageFactory) Create() pages.PageInterface {
 			if event.Data["secret"].(secrets.SecretInterface).GetDescription() != "" {
 				logLine = logLine + " - " + event.Data["secret"].(secrets.SecretInterface).GetDescription()
 			}
-
-			// logBox.AddLine(fmt.Sprintf("Found secret '%s' in file", logLine), logging.Info)
-			// logBox.AddSeparator()
 		})
 
 	inplainsight.InPlainSight.AddEventsListener(
