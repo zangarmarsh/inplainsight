@@ -11,6 +11,10 @@ type MagicNumber byte
 type SecretInterface interface {
 	Serialize() string
 	Unserialize(serialized string) SecretInterface
+
+	SetHeader(header *Header)
+	GetHeader() *Header
+
 	MarkDeleatable()
 	IsDeleatable() bool
 
@@ -33,6 +37,8 @@ type SecretInterface interface {
 type AbstractSecret struct {
 	Deleatable bool
 	container  *Container
+
+	header *Header
 }
 
 func (s *AbstractSecret) MarkDeleatable() {
@@ -54,4 +60,12 @@ func (s *AbstractSecret) GetContainer() *Container {
 // Generic icon
 func (s *AbstractSecret) GetIcon() rune {
 	return '👤'
+}
+
+func (s *AbstractSecret) SetHeader(h *Header) {
+	s.header = h
+}
+
+func (s *AbstractSecret) GetHeader() *Header {
+	return s.header
 }

@@ -88,7 +88,6 @@ func Navigate(in any) error {
 		page = (in).(*GridPage)
 		pageName = page.GetName()
 	default:
-		// Todo clean'em up
 		log.Fatalln("Unsupported type of page", sType)
 		return errors.New("Unsupported type of page")
 	}
