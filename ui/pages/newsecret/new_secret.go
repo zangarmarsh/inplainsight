@@ -30,7 +30,7 @@ func Create() *pages.GridPage {
 
 	flex := tview.NewFlex()
 	flex.
-		SetTitle(fmt.Sprintf("new - inplainsight v%s ", inplainsight.Version)).
+		SetTitle(fmt.Sprintf(" new - inplainsight v%s ", inplainsight.Version)).
 		SetBorder(true)
 
 	flex.SetDirection(tview.FlexColumn)

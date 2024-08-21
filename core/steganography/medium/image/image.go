@@ -89,6 +89,7 @@ func (i *Image) Interweave(secret string) error {
 	width, height := (*i.resource).Bounds().Size().X, (*i.resource).Bounds().Size().Y
 	output := image.NewNRGBA(image.Rect(0, 0, width, height))
 
+	// Todo leverage multi core and speed it up
 	{
 		bitsChan := make(chan uint8)
 

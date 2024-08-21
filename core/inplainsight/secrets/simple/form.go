@@ -1,6 +1,7 @@
 package simple
 
 import (
+	"fmt"
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
@@ -19,7 +20,7 @@ func (s *SimpleSecret) GetForm() *tview.Form {
 			if results := inplainsight.InPlainSight.Hosts.SearchByContainerPath(currentText); results != nil {
 				for _, result := range results {
 					// Todo check if secret can be contained by chosen container
-					entries = append(entries, filepath.Base(result.Host.GetPath()))
+					entries = append(entries, fmt.Sprintf("%s (cap %dM)", filepath.Base(result.Host.GetPath()), result.Host.Cap()/1e6))
 				}
 			}
 
@@ -29,6 +30,10 @@ func (s *SimpleSecret) GetForm() *tview.Form {
 
 			return
 		})
+
+	if s.GetContainer() != nil {
+		dedicatedHostInput.SetText(s.GetContainer().Host.GetPath())
+	}
 
 	form.
 		AddInputField("Title", s.title, 0, nil, nil).

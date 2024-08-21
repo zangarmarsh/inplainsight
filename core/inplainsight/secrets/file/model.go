@@ -15,7 +15,7 @@ type File struct {
 	title    string
 	note     string
 	fileName string
-	content  string
+	content  []byte
 }
 
 func init() {
@@ -29,7 +29,7 @@ func (s *File) Serialize() string {
 		return ""
 	}
 
-	serializedContent := base64.StdEncoding.EncodeToString([]byte(s.content))
+	serializedContent := base64.StdEncoding.EncodeToString(s.content)
 
 	return string(s.GetMagicNumber()) +
 		s.title + string(secrets.SecretSeparator) +
@@ -45,11 +45,11 @@ func (s *File) Unserialize(serialized string) secrets.SecretInterface {
 		s.title = fields[0]
 		s.note = fields[1]
 		s.fileName = fields[2]
-		s.content = fields[3]
+		base64EncodedContent := fields[3]
 
-		decodeContent, err := base64.StdEncoding.DecodeString(s.content)
+		decodeContent, err := base64.StdEncoding.DecodeString(base64EncodedContent)
 		if len(decodeContent) > 0 && err == nil {
-			s.content = string(decodeContent)
+			s.content = decodeContent
 			return s
 		} else {
 			log.Printf("Cannot base64 decode string '%s': %v", serialized, err)
@@ -83,5 +83,5 @@ func (s *File) GetDescription() string {
 }
 
 func (s *File) GetIcon() rune {
-	return '📝'
+	return '📦' // 🗂️📦📨📥📬📂📁🗄️
 }

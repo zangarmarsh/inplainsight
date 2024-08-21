@@ -8,6 +8,7 @@ import (
 	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"github.com/zangarmarsh/inplainsight/core/steganography"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -47,10 +48,13 @@ func Conceal(secret secrets.SecretInterface) error {
 
 	if secret.GetContainer() == nil {
 		// At this point there should be already a bunch of secret hosts
-		secret.SetContainer(InPlainSight.Hosts.Random(len(secretMessage)))
+		container := InPlainSight.Hosts.Random(len(secretMessage))
 
-		if secret.GetContainer() != nil {
+		if container != nil {
+			secret.SetContainer(container)
 			secret.GetContainer().Add(secret)
+		} else {
+			return errors.New("there's no eligible medium within the `Pool path` which can contain this secret")
 		}
 	}
 
@@ -120,10 +124,9 @@ func Reveal(fileName string) error {
 
 	if host != nil {
 		container := secrets.Container{Host: host}
+		InPlainSight.Hosts.Add(&container)
 
 		if len(*host.Data()) > 0 {
-			InPlainSight.Hosts.Add(&container)
-
 			var contentEncryptionKey []byte
 			var err error
 
@@ -144,6 +147,10 @@ func Reveal(fileName string) error {
 			for _, secret := range container.GetItems() {
 				secret.SetContainer(&container)
 				InPlainSight.Secrets = append(InPlainSight.Secrets, secret)
+
+				sort.Slice(InPlainSight.Secrets, func(i, j int) bool {
+					return InPlainSight.Secrets[i].GetTitle() < InPlainSight.Secrets[j].GetTitle()
+				})
 
 				InPlainSight.Trigger(events.Event{
 					CreatedAt: time.Now(),

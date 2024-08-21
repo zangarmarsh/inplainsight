@@ -76,7 +76,7 @@ func (s *File) DoAction() {
 				}
 
 				defer handle.Close()
-				charCount, err := handle.WriteString(s.content)
+				charCount, err := handle.Write(s.content)
 				if err != nil || charCount != len(s.content) {
 					log.Println("error writing to file:", err)
 					widgets.NewModal(

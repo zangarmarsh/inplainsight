@@ -33,6 +33,10 @@ func SniffMimeType(filePath string) string {
 // returns the suggested string. Otherwise, if the query does not match any valid path and no suggestible file or folder
 // is found, SuggestFSPath returns an empty string.
 func SuggestFSPath(query string) (suggestion string) {
+	if len(query) == 0 {
+		return
+	}
+
 	if strings.ToLower(runtime.GOOS) == "linux" || strings.ToLower(runtime.GOOS) == "darwin" {
 		if query[0] == '~' {
 			homePath, _ := os.UserHomeDir()

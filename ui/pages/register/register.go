@@ -142,8 +142,8 @@ func (r pageFactory) Create() pages.PageInterface {
 		})
 
 	grid := tview.NewGrid().
-		SetRows(0, 0).
-		SetColumns(0, 0, 0)
+		SetRows(0, 0, 0, 0, 0, 0).
+		SetColumns(0, 0, 0, 0, 0, 0)
 
 	flex := tview.NewFlex()
 	flex.SetTitle(fmt.Sprintf(" register - inplainsight v%s ", inplainsight.Version)).
@@ -164,8 +164,9 @@ func (r pageFactory) Create() pages.PageInterface {
 	flex.AddItem(form, 0, 2, true)
 
 	grid.
-		AddItem(flex, 0, 1, 1, 1, 33, 50, true).
-		AddItem(flex, 0, 0, 3, 3, 0, 0, true)
+		// AddItem(flex, 0, 2, 2, 2, 80, 80, true).
+		AddItem(flex, 0, 2, 3, 2, 50, 50, true).
+		AddItem(flex, 0, 0, 6, 6, 0, 0, true)
 
 	grid.SetBorderPadding(2, 0, 0, 0)
 

@@ -6,6 +6,7 @@ import (
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
 	"github.com/zangarmarsh/inplainsight/core/utility"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
+	"github.com/zangarmarsh/inplainsight/ui/widgets"
 	"log"
 	"os"
 	"path/filepath"
@@ -19,7 +20,6 @@ func (s *File) GetForm() *tview.Form {
 	filePathInput = tview.NewInputField()
 	filePathInput.
 		SetLabel("File path").
-		SetText(inplainsight.InPlainSight.UserPreferences.PoolPath).
 		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			if event.Key() == tcell.KeyTab {
 				if prevision := utility.SuggestFSPath(filePathInput.GetText()); prevision != "" {
@@ -68,7 +68,7 @@ func (s *File) GetForm() *tview.Form {
 				log.Printf("Could not read (entirely?) file: %s (err: %s)", filePath, err)
 				return
 			} else {
-				s.content = string(content)
+				s.content = content
 			}
 
 			err = inplainsight.Conceal(s)
@@ -81,11 +81,11 @@ func (s *File) GetForm() *tview.Form {
 				inplainsight.InPlainSight.App.SetFocus(form.GetFormItem(0))
 
 				log.Println("added secret", s)
+				pages.GoBack()
 			} else {
+				widgets.NewModal(widgets.ModalAlert, err.Error(), "", nil)
 				log.Printf("Could not conceal file %s (err: %s)", filePath, err)
 			}
-
-			pages.GoBack()
 		}).
 		SetButtonsAlign(tview.AlignRight)
 

@@ -1,6 +1,7 @@
 package inplainsight
 
 import (
+	"github.com/zangarmarsh/inplainsight/core/cryptography"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"golang.org/x/exp/rand"
 	"strings"
@@ -22,6 +23,9 @@ func (p *HostsPool) Add(host *secrets.Container) {
 
 func (p *HostsPool) Random(requiredSpace int) *secrets.Container {
 	var eligibles []*secrets.Container
+
+	// Adjusting the secret length to anticipate any potential increase due to encryption
+	requiredSpace = cryptography.Bits(requiredSpace)
 
 	for _, container := range p.pool {
 		if int((*container).Host.Cap()-(*container).Host.Len()) >= requiredSpace {

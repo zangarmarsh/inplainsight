@@ -26,7 +26,7 @@ func Create(secret secrets.SecretInterface) *pages.GridPage {
 		SetColumns(0, 0, 0)
 
 	flex := tview.NewFlex()
-	flex.SetTitle(fmt.Sprintf("edit - inplainsight v%s ", inplainsight.Version)).
+	flex.SetTitle(fmt.Sprintf(" edit - inplainsight v%s ", inplainsight.Version)).
 		SetBorder(true)
 
 	flex.SetDirection(tview.FlexRow)
