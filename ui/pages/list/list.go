@@ -44,7 +44,7 @@ func (r pageFactory) Create() pages.PageInterface {
 		})
 
 		for index, secret := range secrets {
-			if len(searchQuery) == 0 || secret.Filter(searchQuery) {
+			if !secret.IsDeleatable() && (len(searchQuery) == 0 || secret.Filter(searchQuery)) {
 				filteredSecrets = append(
 					filteredSecrets,
 					secret,
