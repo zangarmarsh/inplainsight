@@ -38,10 +38,12 @@ func init() {
 ```
 
 ### Supported secret structures
-| ID   | Type     |Fields|
-|------|----------|------|
- | 0x01 | `Secret` |Title, Description, Secret|
- | 0x02 | `WebsiteCredential` | URL, Note, Account, Password| 
+| ID   | Type     | Fields                       |
+|------|----------|------------------------------|
+ | 0x01 | `Secret` | Title, Description, Secret   |
+ | 0x02 | `WebsiteCredential` | URL, Note, Account, Password | 
+  | 0x04 | `Note` | Title, Note                  |
+| 0x05 | `File` | Title, Note, File path       |
 
 ## Media formats
 ### How to implement a new media format
