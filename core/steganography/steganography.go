@@ -53,7 +53,7 @@ func CutYarnChunks(c chan uint8, yarn []uint8, bits int) {
 			offset := 8 - (i+1)*bits
 			bitmask := genericBitmask
 
-			// Adapt the bitmask if bith * channels is not a multiplier of 32
+			// Adapt the bitmask if bit * channels is not a multiplier of 32
 			if offset < 0 {
 				bitmask >>= int(math.Abs(float64(offset)))
 				offset = 0

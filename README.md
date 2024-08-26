@@ -99,8 +99,9 @@ func init() {
 - Feature that allows to move a specific `Secret` into another choosable medium
 - New `Secret` models:
   - ~~Website~~
-  - Note
-  - File
+  - ~~Note~~
+  - ~~File~~
+  - Folders
 - Optional user preferences persistance
   - ~~Pool path at login~~
   - ~~Logout on screen lock~~
