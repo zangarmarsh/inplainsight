@@ -60,7 +60,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			}
 		}
 
-		if resultList.GetItemCount() == 0 {
+		if resultList.GetItemCount() == 0 && len(searchQuery) > 0 {
 			resultList.AddItem("No secrets have been found for the given query.", "", '\x00', nil)
 		}
 	}
@@ -374,7 +374,10 @@ func (r pageFactory) Create() pages.PageInterface {
 					return
 				}
 
-				filteredSecrets = append(filteredSecrets[*selectedListItem:], filteredSecrets[:(*selectedListItem)+1]...)
+				if cap(filteredSecrets) > 0 {
+					filteredSecrets = append(filteredSecrets[*selectedListItem:], filteredSecrets[:(*selectedListItem)+1]...)
+				}
+
 				filterResults(resultList, inplainsight.InPlainSight.Secrets)
 			})
 			inplainsight.InPlainSight.App.ForceDraw()
