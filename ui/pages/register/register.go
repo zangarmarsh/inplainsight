@@ -47,7 +47,7 @@ func (r pageFactory) Create() pages.PageInterface {
 
 	poolPathInput := tview.NewInputField()
 	poolPathInput.
-		SetLabel("Pool path").
+		SetLabel("Media path").
 		SetText(inplainsight.InPlainSight.UserPreferences.PoolPath).
 		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			if event.Key() == tcell.KeyTab {
@@ -83,7 +83,7 @@ func (r pageFactory) Create() pages.PageInterface {
 			}
 
 			password := form.GetFormItemByLabel("Master Password").(*tview.InputField).GetText()
-			path := form.GetFormItemByLabel("Pool path").(*tview.InputField).GetText()
+			path := form.GetFormItemByLabel("Media path").(*tview.InputField).GetText()
 
 			if form.GetFormItemByLabel("Remember path").(*tview.Checkbox).IsChecked() {
 				log.Println("saving user preference")
@@ -180,8 +180,6 @@ func revealSecret(file os.DirEntry) {
 		log.Println("found eligibile file " + file.Name())
 
 		err := inplainsight.Reveal(file.Name())
-
-		log.Println(fmt.Sprintf("master password used to reveal %#v", inplainsight.InPlainSight.MasterPassword))
 
 		if err == nil {
 			log.Println(fmt.Sprintf("found secret in %v", file.Name()))
