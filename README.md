@@ -1,6 +1,8 @@
 # inplainsight
 
-<img src="https://zangarmarsh.semaphoreci.com/badges/inplainsight/branches/main.svg">
+[![Go](https://github.com/zangarmarsh/inplainsight/actions/workflows/go.yml/badge.svg?branch=main)](https://github.com/zangarmarsh/inplainsight/actions/workflows/go.yml)
+[![Release Go project](https://github.com/zangarmarsh/inplainsight/actions/workflows/release-build.yml/badge.svg)](https://github.com/zangarmarsh/inplainsight/actions/workflows/release-build.yml)
+[![CodeQL](https://github.com/zangarmarsh/inplainsight/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/zangarmarsh/inplainsight/actions/workflows/codeql-analysis.yml)
 
 This is a platform-independent **password (secret?)** manager which hides your secrets _in plain sight_. It takes extreme care about
 the reliability and safety of your data.
