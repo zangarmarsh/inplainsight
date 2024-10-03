@@ -69,7 +69,7 @@ func (s *Note) SetDescription(note string) {
 }
 
 func (s *Note) GetDescription() string {
-	return ""
+	return s.note
 }
 
 func (s *Note) GetIcon() rune {
