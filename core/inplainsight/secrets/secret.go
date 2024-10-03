@@ -1,6 +1,7 @@
 package secrets
 
 import (
+	"github.com/google/uuid"
 	"github.com/rivo/tview"
 )
 
@@ -32,13 +33,27 @@ type SecretInterface interface {
 
 	DoAction()
 	GetIcon() rune
+
+	AssignRandomID()
+	GetID() string
 }
 
 type AbstractSecret struct {
+	id         string
 	Deleatable bool
 	container  *Container
 
 	header *Header
+}
+
+func (s *AbstractSecret) AssignRandomID() {
+	// ToDo handle error cases
+	generatedUUID, _ := uuid.NewRandom()
+	s.id = generatedUUID.String()
+}
+
+func (s *AbstractSecret) GetID() string {
+	return s.id
 }
 
 func (s *AbstractSecret) MarkDeleatable() {

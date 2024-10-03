@@ -4,7 +4,9 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/zangarmarsh/inplainsight/core/inplainsight"
+	"github.com/zangarmarsh/inplainsight/core/inplainsight/secrets"
 	"github.com/zangarmarsh/inplainsight/core/utility"
+	"github.com/zangarmarsh/inplainsight/core/utility/tuihelpers"
 	"github.com/zangarmarsh/inplainsight/ui/pages"
 	"github.com/zangarmarsh/inplainsight/ui/widgets"
 	"log"
@@ -38,7 +40,22 @@ func (s *File) GetForm() *tview.Form {
 	form.
 		AddInputField("Title", s.title, 0, nil, nil).
 		AddTextArea("Note", s.note, 0, 0, 0, nil).
-		AddFormItem(filePathInput).
+		AddFormItem(filePathInput)
+
+	var dedicatedHostInput *tview.InputField
+	{
+		var containerPath string
+
+		if s.GetContainer() != nil {
+			containerPath = s.GetContainer().Host.GetPath()
+			containerPath = containerPath[len(inplainsight.InPlainSight.Path):]
+		}
+
+		dedicatedHostInput = tuihelpers.GenerateContainerSelector(containerPath)
+		form.AddFormItem(dedicatedHostInput)
+	}
+
+	form.
 		AddButton("Cancel", func() {
 			pages.GoBack()
 		}).
@@ -69,6 +86,14 @@ func (s *File) GetForm() *tview.Form {
 				return
 			} else {
 				s.content = content
+			}
+
+			if container := dedicatedHostInput.GetText(); container != "Random" {
+				log.Printf("setting %s as container\n", filepath.Join(inplainsight.InPlainSight.Path, container))
+				if container := inplainsight.InPlainSight.Hosts.SearchByContainerPath(filepath.Join(inplainsight.InPlainSight.Path, container)); len(container) == 1 {
+					container := container[0]
+					secrets.LinkSecretAndContainer(s, container)
+				}
 			}
 
 			err = inplainsight.Conceal(s)

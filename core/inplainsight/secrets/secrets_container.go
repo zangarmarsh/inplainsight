@@ -32,6 +32,8 @@ func (c *Container) Unserialize(content string) {
 			if SecretsModelRegister[secretHeader.mn] != nil {
 				if secret := SecretsModelRegister[secretHeader.mn](singleSecretContent); secret != nil {
 					secret.SetHeader(secretHeader)
+					secret.AssignRandomID()
+
 					c.secrets = append(c.secrets, secret)
 				}
 			}

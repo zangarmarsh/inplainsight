@@ -95,8 +95,8 @@ func init() {
 - Improve `Secret`
   - ~~Multiple secrets in one medium~~
   - ~~Make `Secret` more abstract and implementable in order to be easily extended~~
-  - Give the user the ability to choose which file will be used (default will be `random`)
-  - Exclusive host for one secret
+  - ~~Give the user the ability to choose which file will be used (default will be `random`)~~
+  - ~~Exclusive host for one secret~~ make it choosable by any create form
   - `stealth mode` file header encryption
   - ~~Add secret icons~~
   - ~~Add custom `Action`~~
@@ -106,12 +106,14 @@ func init() {
   - ~~Note~~
   - ~~File~~
   - Folders
+  - TOTP
+  - HOTP
 - Optional user preferences persistance
   - ~~Pool path at login~~
   - ~~Logout on screen lock~~
   - ~~Session timeout while inactive~~
   - `haveibeenpwned` optional periodical checks
-- Blank image generation
+- Blank dummy medium generation
 - Support new data sources
   - `HTTPS`
   - `S3`
@@ -127,3 +129,5 @@ func init() {
     - `MP4` (?)
 - Browser extension
 - Pool of data-sources from text file (?)
+- UX/UI improvements
+  - Enable navigation through arrow up/down 

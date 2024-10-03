@@ -26,7 +26,7 @@ var InPlainSight = &InPlainSightClient{
 func Conceal(secret secrets.SecretInterface) error {
 	isCreating := true
 
-	// ToDo maybe worth creating a isEmpty() method on SimpleSecret
+	// ToDo maybe it is worth creating a isEmpty() method on SimpleSecret
 	secretMessage := []byte(secret.Serialize())
 	secretMessage = append(secretMessage, secrets.SecretSeparator)
 
@@ -37,11 +37,16 @@ func Conceal(secret secrets.SecretInterface) error {
 	var contentEncryptionKey []byte
 	var err error
 
-	for _, s := range InPlainSight.Secrets {
-		if &s == &secret {
-			isCreating = false
-			break
+	if secret.GetID() != "" {
+		for _, s := range InPlainSight.Secrets {
+			log.Printf("comparing [%x]%+v with [%x]%+v\n", &s, s, &secret, secret)
+			if s.GetID() == secret.GetID() {
+				isCreating = false
+				break
+			}
 		}
+	} else {
+		secret.AssignRandomID()
 	}
 
 	log.Println("Is creating?", isCreating, "container", secret.GetContainer())
