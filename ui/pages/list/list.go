@@ -220,6 +220,11 @@ func (r pageFactory) Create() pages.PageInterface {
 		inplainsight.InPlainSight.AddEventsListener([]events.EventType{events.AppInit}, func(event events.Event) {
 			sourceOfDataLabel.SetText(inplainsight.InPlainSight.Path)
 		})
+
+		inplainsight.InPlainSight.AddEventsListener([]events.EventType{events.AppInit}, func(event events.Event) {
+			searchQuery = ""
+			filterResults(resultList, inplainsight.InPlainSight.Secrets)
+		})
 	}
 
 	// Query box

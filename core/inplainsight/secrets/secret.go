@@ -86,6 +86,8 @@ func (s *AbstractSecret) GetHeader() *Header {
 }
 
 func LinkSecretAndContainer(secret SecretInterface, container *Container) {
-	secret.SetContainer(container)
-	(*container).Add(secret)
+	if secret.GetContainer() != container {
+		secret.SetContainer(container)
+		(*container).Add(secret)
+	}
 }
