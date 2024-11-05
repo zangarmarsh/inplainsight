@@ -39,7 +39,6 @@ func Conceal(secret secrets.SecretInterface) error {
 
 	if secret.GetID() != "" {
 		for _, s := range InPlainSight.Secrets {
-			log.Printf("comparing [%x]%+v with [%x]%+v\n", &s, s, &secret, secret)
 			if s.GetID() == secret.GetID() {
 				isCreating = false
 				break
